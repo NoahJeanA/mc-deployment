@@ -6,6 +6,8 @@ resources:
     memory: "4Gi"
     cpu: "2000m"
 
+
+
 # Speicherkonfiguration
 storage:
   world: 5Gi
@@ -21,7 +23,9 @@ initResources:
 # Server-Konfiguration
 server:
   # Zeit in Sekunden, die der Pod laufen soll
-  runTime: 86400
+  java:
+    maxMemory: "4G"
+    minMemory: "2G"
   properties:
     allowFlight: "false"
     allowNether: "true"
@@ -34,3 +38,6 @@ server:
     onlineMode: "true"
     pvp: "true"
     viewDistance: "10"
+
+service:
+  nodePort: 30565 

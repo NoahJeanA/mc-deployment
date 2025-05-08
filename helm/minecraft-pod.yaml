@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: {{ .Release.Name }}-pod
+  name: minecraft-pod
   labels:
-    app: {{ .Release.Name }}
+    app: minecraft
 spec:
   initContainers:
   - name: wait-for-resources
@@ -37,11 +37,11 @@ spec:
     image: noahjeana/multi-java:1.0.1
     resources:
       limits:
-        memory: {{ .Values.resources.limits.memory }}
-        cpu: {{ .Values.resources.limits.cpu }}
+        memory: 6Gi
+        cpu: 3000m
       requests:
-        memory: {{ .Values.resources.requests.memory }}
-        cpu: {{ .Values.resources.requests.cpu }}
+        memory: 4Gi
+        cpu: 2000m
     volumeMounts:
     - name: binary-volume
       mountPath: /minecraft-binary-mount
@@ -96,32 +96,32 @@ spec:
       
       cd /app &&
       echo "Starting Minecraft server..." &&
-      java -Xmx{{ .Values.server.java.maxMemory }} -Xms{{ .Values.server.java.minMemory }} -jar server.jar nogui
+      java -Xmx4G -Xms2G -jar server.jar nogui
   volumes:
   - name: binary-volume
     persistentVolumeClaim:
-      claimName: {{ .Values.initResources.releaseName }}-minecraft-binary-{{ .Values.initResources.minecraftVersion | replace "." "-" }}
+      claimName: init-minecraft-binary-1-21-5
   - name: eula-volume
     persistentVolumeClaim:
-      claimName: {{ .Values.initResources.releaseName }}-minecraft-eula
+      claimName: init-minecraft-eula
   - name: symlinks-volume
     configMap:
-      name: {{ .Values.initResources.releaseName }}-minecraft-symlinks
+      name: init-minecraft-symlinks
       defaultMode: 0755
   - name: minecraft-cash-setup-volume
     configMap:
-      name: {{ .Values.initResources.releaseName }}-minecraft-cash-setup
+      name: init-minecraft-cash-setup
       defaultMode: 0755
   - name: cash-volume
     persistentVolumeClaim:
-      claimName: {{ .Release.Name }}-cash
+      claimName: minecraft-cash
   - name: server-properties-volume
     configMap:
-      name: {{ .Release.Name }}-server-properties
+      name: minecraft-server-properties
   - name: minecraft-world-volume
     persistentVolumeClaim:
-      claimName: {{ .Release.Name }}-world
+      claimName: minecraft-world
   - name: world-link-volume
     configMap:
-      name: {{ .Values.initResources.releaseName }}-world-link
+      name: init-world-link
       defaultMode: 0755
