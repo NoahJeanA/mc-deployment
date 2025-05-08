@@ -1,0 +1,30 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-populate-minecraft-pvc
+spec:
+  template:
+    spec:
+      containers:
+      - name: populate
+        image: busybox
+        command: ['/bin/sh', '-c']
+        args:
+          - |
+            echo "# Minecraft Server EULA - Automatically accepted on $(date)" > /eula/eula.txt
+            echo "eula=true" >> /eula/eula.txt
+            wget -O /minecraft-{{ .Values.minecraft.version | replace "." "-" }}/server.jar {{ .Values.minecraft.jarUrl }}
+        volumeMounts:
+        - name: eula-pvc
+          mountPath: /eula
+        - name: minecraft-binary
+          mountPath: /minecraft-{{ .Values.minecraft.version | replace "." "-" }}
+      restartPolicy: Never
+      volumes:
+      - name: eula-pvc
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}-minecraft-eula
+      - name: minecraft-binary
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}-minecraft-binary-{{ .Values.minecraft.version | replace "." "-" }}
+  backoffLimit: 4

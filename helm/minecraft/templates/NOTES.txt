@@ -1,0 +1,13 @@
+Minecraft-Server wurde erfolgreich installiert!
+
+Pod: {{ .Release.Name }}-pod
+Welt-PVC: {{ .Release.Name }}-world
+Cash-PVC: {{ .Release.Name }}-cash
+Server-Eigenschaften: {{ .Release.Name }}-server-properties
+
+Der Server ist für {{ .Values.server.runTime }} Sekunden (ca. {{ div .Values.server.runTime 3600 }} Stunden) konfiguriert.
+
+Um die Logs des Servers anzuzeigen:
+  kubectl logs -f {{ .Release.Name }}-pod
+
+Erfolgreiche Installation!
