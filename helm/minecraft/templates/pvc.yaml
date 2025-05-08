@@ -19,3 +19,14 @@ spec:
   resources:
     requests:
       storage: {{ .Values.storage.cash }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Release.Name }}-world-backup
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.storage.world }}

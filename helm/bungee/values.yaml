@@ -7,11 +7,11 @@ proxy:
 # Minecraft-Server-Konfiguration
 servers:
   - name: "server1"
-    address: "minecraft-server-0.minecraft-server-headless"
+    address: "minecraft-server-0.minecraft-server-headless.default.svc.cluster.local"
     port: 25565
     isDefault: true
   - name: "server2"
-    address: "minecraft-server-1.minecraft-server-headless"
+    address: "minecraft-server-1.minecraft-server-headless.default.svc.cluster.local"
     port: 25565
     isDefault: false
 

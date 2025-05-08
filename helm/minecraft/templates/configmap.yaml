@@ -34,7 +34,7 @@ data:
     max-tick-time=60000
     max-world-size=29999984
     motd={{ .Values.server.properties.motd }}
-    network-compression-threshold=256
+    network-compression-threshold=-1
     online-mode={{ .Values.server.properties.onlineMode }}
     op-permission-level=4
     player-idle-timeout=0
@@ -42,11 +42,14 @@ data:
     pvp={{ .Values.server.properties.pvp }}
     query.port=25565
     rate-limit=0
-    rcon.password=
+    rcon.password={{ .Values.rcon.password }}
     rcon.port=25575
     resource-pack=
     resource-pack-sha1=
-    server-ip=
+    enable-status=true
+    server-ip=0.0.0.0
+    bungeecord=true
+    enable-rcon=true
     server-port=25565
     snooper-enabled=true
     spawn-animals=true
@@ -57,3 +60,5 @@ data:
     use-native-transport=true
     view-distance={{ .Values.server.properties.viewDistance }}
     white-list=false
+
+        

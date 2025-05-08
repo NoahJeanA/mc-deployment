@@ -1,6 +1,6 @@
 # Setzen Sie auf 0, um den Server auszuschalten
 # Setzen Sie auf 1, um den Server einzuschalten
-replicaCount: 2
+replicaCount: 1
 
 # Ressourcenkonfiguration
 resources:

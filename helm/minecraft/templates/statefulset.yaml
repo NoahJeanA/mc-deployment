@@ -91,6 +91,11 @@ spec:
         - name: world-link-volume
           mountPath: /scripts/world-link.sh
           subPath: world-link.sh
+        - name: minecraft-world-backup-volume
+          mountPath: /backup-world
+        - name: world-sync-volume
+          mountPath: /scripts/world-sync.sh
+          subPath: world-sync.sh
         
         command: ["/bin/sh", "-c"]
         args:
@@ -152,4 +157,11 @@ spec:
       - name: world-link-volume
         configMap:
           name: {{ .Values.initResources.releaseName }}-world-link
+          defaultMode: 0755
+      - name: minecraft-world-backup-volume
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}-world-backup
+      - name: world-sync-volume
+        configMap:
+          name: {{ .Release.Name }}-world-sync
           defaultMode: 0755
