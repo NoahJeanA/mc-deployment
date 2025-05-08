@@ -1,6 +1,6 @@
 # Proxy-Konfiguration
 proxy:
-  type: "BUNGEECORD"  # Alternative: "VELOCITY"
+  type: "WATERFALL"  # Alternative BungeeCord implementation
   image: "itzg/bungeecord:latest"
   port: 25565
   
@@ -19,12 +19,12 @@ servers:
 resources:
   limits:
     cpu: "1000m"
-    memory: "1Gi"
+    memory: "1G"
   requests:
     cpu: "500m"
-    memory: "512Mi"
+    memory: "1G"
 
 # Service-Konfiguration
 service:
   type: NodePort
-  nodePort: 25565  # Gleicher Port wie Ihr aktueller Minecraft-Server
+  nodePort: 30566 # Gleicher Port wie Ihr aktueller Minecraft-Server

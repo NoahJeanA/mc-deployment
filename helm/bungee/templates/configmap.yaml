@@ -40,7 +40,7 @@ data:
       admin:
       - admin
     connection_throttle: 4000
-    online_mode: true
+    online_mode: false
     forge_support: true
     servers:
       {{- range .Values.servers }}
