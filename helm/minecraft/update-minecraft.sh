@@ -20,14 +20,14 @@ echo -e "Current replica count: ${GREEN}${CURRENT_REPLICAS}${NC}"
 # Wenn Server ausgeschaltet ist (0 Repliken), einfach nur die Konfiguration aktualisieren
 if [ "$CURRENT_REPLICAS" -eq "0" ]; then
     echo -e "${YELLOW}Server is currently scaled down to 0. Updating configuration only...${NC}"
-    helm upgrade ${RELEASE_NAME} helm/minecraft/ --set replicaCount=0
+    helm upgrade ${RELEASE_NAME} ../minecraft/ --set replicaCount=0
     echo -e "${GREEN}Configuration updated. Server remains scaled down.${NC}"
     exit 0
 fi
 
 # 2. Auf mindestens 2 Repliken hochskalieren, um ein Rolling Update zu erzwingen
 echo -e "${YELLOW}Scaling to 2 replicas to initiate rolling update...${NC}"
-helm upgrade ${RELEASE_NAME} helm/minecraft/ --set replicaCount=2
+helm upgrade ${RELEASE_NAME} ../minecraft/ --set replicaCount=2
 
 # 3. Warten, bis der zweite Pod bereit ist
 echo -e "${YELLOW}Waiting for new pod to be ready...${NC}"
@@ -36,7 +36,7 @@ kubectl wait --for=condition=ready pod/${POD_NAME} -n ${NAMESPACE} --timeout=300
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}New pod failed to become ready within timeout. Rolling back...${NC}"
-    helm upgrade ${RELEASE_NAME} helm/minecraft/ --set replicaCount=${CURRENT_REPLICAS}
+    helm upgrade ${RELEASE_NAME} ../minecraft/ --set replicaCount=${CURRENT_REPLICAS}
     exit 1
 fi
 
@@ -63,7 +63,7 @@ fi
 
 # 5. Zurück auf die ursprüngliche Replikaanzahl skalieren (in der Regel 1)
 echo -e "${YELLOW}Scaling back to ${CURRENT_REPLICAS} replica(s)...${NC}"
-helm upgrade ${RELEASE_NAME} helm/minecraft/ --set replicaCount=${CURRENT_REPLICAS}
+helm upgrade ${RELEASE_NAME} ../minecraft/ --set replicaCount=${CURRENT_REPLICAS}
 
 # 6. Warten, bis die überflüssigen Pods terminiert sind
 echo -e "${YELLOW}Waiting for excess pods to terminate...${NC}"

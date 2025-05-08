@@ -1,17 +1,25 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Release.Name }}-headless
+  name: {{ .Release.Name }}-service
   labels:
     app: {{ .Release.Name }}
 spec:
-  clusterIP: None
-  selector:
-    app: {{ .Release.Name }}
+  type: NodePort
   ports:
   - port: 25565
+    targetPort: 25565
+    protocol: TCP
     name: minecraft
+    nodePort: {{ .Values.service.nodePort | default 30565 }}
   {{- if .Values.rcon.enabled }}
   - port: {{ .Values.rcon.port | default 25575 }}
+    targetPort: {{ .Values.rcon.port | default 25575 }}
+    protocol: TCP
     name: rcon
+    {{- if .Values.service.rconNodePort }}
+    nodePort: {{ .Values.service.rconNodePort }}
+    {{- end }}
   {{- end }}
+  selector:
+    app: {{ .Release.Name }}
