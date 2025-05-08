@@ -5,6 +5,7 @@
 MINECRAFT_RELEASE="minecraft-server"
 BUNGEE_RELEASE="bungee"
 NAMESPACE="default"
+RCON_PASSWORD="MeinSicheresRCONPasswort"
 
 # Farben für Ausgabe
 GREEN='\033[0;32m'

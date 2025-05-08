@@ -52,6 +52,21 @@ spec:
       containers:
       - name: minecraft-java-container
         image: noahjeana/multi-java:1.0.1
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - |
+              if pgrep -f "java.*server.jar" > /dev/null && grep -q "Done.*For help" /app/logs/latest.log 2>/dev/null; then
+                exit 0
+              else
+                exit 1
+              fi
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 20
         lifecycle:
           preStop:
             exec:
