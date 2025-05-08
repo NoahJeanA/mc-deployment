@@ -1,0 +1,164 @@
+# Datei: templates/statefulset.yaml (ersetzt pod.yaml)
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replicaCount | default 1 }}  # Auf 0 setzen zum Ausschalten
+  serviceName: {{ .Release.Name }}-headless
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+    spec:
+      initContainers:
+      - name: wait-for-resources
+        image: busybox
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          echo "Warte auf PVCs und Dateien..."
+          
+          # Warten bis die Job-erstellten Dateien verfügbar sind
+          until [ -f /eula-mount/eula.txt ] && [ -f /minecraft-binary-mount/server.jar ]; do
+            echo "Warte auf Minecraft-Dateien..."
+            sleep 5
+          done
+          
+          echo "Alle benötigten Ressourcen sind verfügbar!"
+          sleep 5
+
+        volumeMounts:
+        - name: binary-volume
+          mountPath: /minecraft-binary-mount
+        - name: eula-volume
+          mountPath: /eula-mount
+        - name: minecraft-world-volume
+          mountPath: /world
+        - name: server-properties-volume
+          mountPath: /config/server.properties
+          subPath: server.properties
+      containers:
+      - name: minecraft-java-container
+        image: noahjeana/multi-java:1.0.1
+        ports:
+        - containerPort: 25565
+          name: minecraft
+        {{- if .Values.rcon.enabled }}
+        - containerPort: {{ .Values.rcon.port | default 25575 }}
+          name: rcon
+        {{- end }}
+        resources:
+          limits:
+            memory: {{ .Values.resources.limits.memory }}
+            cpu: {{ .Values.resources.limits.cpu }}
+          requests:
+            memory: {{ .Values.resources.requests.memory }}
+            cpu: {{ .Values.resources.requests.cpu }}
+        volumeMounts:
+        - name: binary-volume
+          mountPath: /minecraft-binary-mount
+        - name: cash-volume
+          mountPath: /cash
+        - name: eula-volume
+          mountPath: /eula-mount
+        - name: minecraft-world-volume
+          mountPath: /minecraft-world
+        - name: symlinks-volume
+          mountPath: /scripts/links.sh
+          subPath: links.sh
+        - name: minecraft-cash-setup-volume
+          mountPath: /scripts/cash.sh
+          subPath: cash.sh
+        - name: server-properties-volume
+          mountPath: /config/server.properties
+          subPath: server.properties
+        - name: world-link-volume
+          mountPath: /scripts/world-link.sh
+          subPath: world-link.sh
+        
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          /scripts/links.sh &&
+          echo "Lese Weltnamen aus server.properties..." &&
+          WORLD_NAME=$(grep "level-name=" /config/server.properties | cut -d'=' -f2) &&
+          echo "Gefundener Weltname: $WORLD_NAME" &&
+          
+          if [ ! -d "/minecraft-world/$WORLD_NAME" ]; then
+            echo "Keine bestehende Welt im persistenten Speicher gefunden" &&
+            
+            if [ -d "/app/$WORLD_NAME" ]; then
+              echo "Lokale Welt gefunden - verschiebe sie in den persistenten Speicher" &&
+              mkdir -p "/minecraft-world/$WORLD_NAME" &&
+              mv "/app/$WORLD_NAME"/* "/minecraft-world/$WORLD_NAME/" &&
+              echo "Welt erfolgreich in persistenten Speicher verschoben"
+            else
+              echo "Keine lokale Welt gefunden - erstelle neue Welt-Ordnerstruktur" &&
+              mkdir -p "/minecraft-world/$WORLD_NAME"
+            fi
+          else
+            echo "Bestehende Welt im persistenten Speicher gefunden"
+          fi &&
+          
+          /scripts/world-link.sh &&
+          sleep 10 &&
+          /scripts/cash.sh &&
+          rm -f /app/server.properties &&
+          cp /config/server.properties /app &&
+          
+          cd /app &&
+          echo "Starting Minecraft server..." &&
+          java -Xmx{{ .Values.server.java.maxMemory }} -Xms{{ .Values.server.java.minMemory }} -jar server.jar nogui
+      volumes:
+      - name: binary-volume
+        persistentVolumeClaim:
+          claimName: {{ .Values.initResources.releaseName }}-minecraft-binary-{{ .Values.initResources.minecraftVersion | replace "." "-" }}
+      - name: eula-volume
+        persistentVolumeClaim:
+          claimName: {{ .Values.initResources.releaseName }}-minecraft-eula
+      - name: symlinks-volume
+        configMap:
+          name: {{ .Values.initResources.releaseName }}-minecraft-symlinks
+          defaultMode: 0755
+      - name: minecraft-cash-setup-volume
+        configMap:
+          name: {{ .Values.initResources.releaseName }}-minecraft-cash-setup
+          defaultMode: 0755
+      - name: cash-volume
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}-cash
+      - name: server-properties-volume
+        configMap:
+          name: {{ .Release.Name }}-server-properties
+      - name: minecraft-world-volume
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}-world
+      - name: world-link-volume
+        configMap:
+          name: {{ .Values.initResources.releaseName }}-world-link
+          defaultMode: 0755
+---
+# Headless-Service für das StatefulSet
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-headless
+  labels:
+    app: {{ .Release.Name }}
+spec:
+  clusterIP: None
+  selector:
+    app: {{ .Release.Name }}
+  ports:
+  - port: 25565
+    name: minecraft
+  {{- if .Values.rcon.enabled }}
+  - port: {{ .Values.rcon.port | default 25575 }}
+    name: rcon
+  {{- end }}

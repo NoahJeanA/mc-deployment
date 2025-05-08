@@ -1,3 +1,4 @@
+# Änderungen an templates/configmap.yaml für RCON-Support
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -13,7 +14,10 @@ data:
     enable-command-block={{ .Values.server.properties.enableCommandBlock }}
     enable-jmx-monitoring=false
     enable-query=false
-    enable-rcon=false
+    # RCON-Konfiguration
+    enable-rcon={{ .Values.rcon.enabled | default "false" }}
+    rcon.password={{ .Values.rcon.password | default "" }}
+    rcon.port={{ .Values.rcon.port | default "25575" }}
     enable-status=true
     enforce-whitelist=false
     entity-broadcast-range-percentage=100
@@ -39,8 +43,6 @@ data:
     pvp={{ .Values.server.properties.pvp }}
     query.port=25565
     rate-limit=0
-    rcon.password=
-    rcon.port=25575
     resource-pack=
     resource-pack-sha1=
     server-ip=

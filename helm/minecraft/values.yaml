@@ -1,3 +1,9 @@
+# Anzahl der Minecraft-Server-Instanzen
+# Setzen Sie auf 0, um den Server auszuschalten
+# Setzen Sie auf 1, um den Server einzuschalten
+replicaCount: 1
+
+# Rest wie vorher...
 resources:
   limits:
     memory: "6Gi"
@@ -6,8 +12,6 @@ resources:
     memory: "4Gi"
     cpu: "2000m"
 
-
-
 # Speicherkonfiguration
 storage:
   world: 5Gi
@@ -15,14 +19,11 @@ storage:
 
 # Init Chart Ressourcen
 initResources:
-  # Name des Init-Release, von dem die Ressourcen verwendet werden
   releaseName: "init"
-  # Minecraft Version mit Bindestrichen statt Punkten
-  minecraftVersion: "1-21-5"
+  minecraftVersion: "1.21.5"
 
 # Server-Konfiguration
 server:
-  # Zeit in Sekunden, die der Pod laufen soll
   java:
     maxMemory: "4G"
     minMemory: "2G"
@@ -39,5 +40,13 @@ server:
     pvp: "true"
     viewDistance: "10"
 
+# RCON-Konfiguration
+rcon:
+  enabled: true
+  password: "MeinSicheresRCONPasswort" 
+  port: 25575
+
+# Service-Konfiguration
 service:
-  nodePort: 30565 
+  nodePort: 30565
+  rconNodePort: 30575
