@@ -1,9 +1,8 @@
-# Anzahl der Minecraft-Server-Instanzen
 # Setzen Sie auf 0, um den Server auszuschalten
 # Setzen Sie auf 1, um den Server einzuschalten
 replicaCount: 1
 
-# Rest wie vorher...
+# Ressourcenkonfiguration
 resources:
   limits:
     memory: "6Gi"
@@ -19,7 +18,9 @@ storage:
 
 # Init Chart Ressourcen
 initResources:
+  # Name des Init-Release, von dem die Ressourcen verwendet werden
   releaseName: "init"
+  # Minecraft Version mit Punkten (wird automatisch konvertiert)
   minecraftVersion: "1.21.5"
 
 # Server-Konfiguration

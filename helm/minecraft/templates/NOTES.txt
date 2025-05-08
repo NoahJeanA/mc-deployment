@@ -1,13 +1,23 @@
 Minecraft-Server wurde erfolgreich installiert!
 
-Pod: {{ .Release.Name }}-pod
+StatefulSet: {{ .Release.Name }}
+Pod: {{ .Release.Name }}-0
 Welt-PVC: {{ .Release.Name }}-world
 Cash-PVC: {{ .Release.Name }}-cash
 Server-Eigenschaften: {{ .Release.Name }}-server-properties
 
-Der Server ist für {{ .Values.server.runTime }} Sekunden (ca. {{ div .Values.server.runTime 3600 }} Stunden) konfiguriert.
+Um den Minecraft-Server zu steuern:
+- Einschalten: kubectl scale statefulset {{ .Release.Name }} --replicas=1
+- Ausschalten: kubectl scale statefulset {{ .Release.Name }} --replicas=0
+- Updates durchführen: ./update-minecraft.sh
+
+Verbinden mit dem Server:
+- Server: <NODE_IP>:{{ .Values.service.nodePort | default 30565 }}
+{{- if .Values.rcon.enabled }}
+- RCON: <NODE_IP>:{{ .Values.service.rconNodePort | default 30575 }}
+{{- end }}
 
 Um die Logs des Servers anzuzeigen:
-  kubectl logs -f {{ .Release.Name }}-pod
+  kubectl logs -f {{ .Release.Name }}-0
 
 Erfolgreiche Installation!
