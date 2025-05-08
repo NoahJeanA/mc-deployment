@@ -1,6 +1,6 @@
 # Setzen Sie auf 0, um den Server auszuschalten
 # Setzen Sie auf 1, um den Server einzuschalten
-replicaCount: 1
+replicaCount: 2
 
 # Ressourcenkonfiguration
 resources:
@@ -37,7 +37,7 @@ server:
     levelName: "world"
     maxPlayers: "20"
     motd: "Ein Minecraft Server mit Kubernetes"
-    onlineMode: "true"
+    onlineMode: "false"
     pvp: "true"
     viewDistance: "10"
 

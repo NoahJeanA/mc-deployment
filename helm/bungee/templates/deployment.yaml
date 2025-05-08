@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app: {{ .Release.Name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+    spec:
+      containers:
+      - name: bungee
+        image: {{ .Values.proxy.image }}
+        env:
+        - name: TYPE
+          value: {{ .Values.proxy.type }}
+        - name: MEMORY
+          value: "{{ .Values.resources.limits.memory }}"
+        - name: BUNGEE_JOB_ID
+          value: "1"
+        - name: BUNGEE_JAR_REVISION
+          value: "latest"
+        ports:
+        - containerPort: {{ .Values.proxy.port }}
+          name: minecraft
+        resources:
+          limits:
+            memory: {{ .Values.resources.limits.memory }}
+            cpu: {{ .Values.resources.limits.cpu }}
+          requests:
+            memory: {{ .Values.resources.requests.memory }}
+            cpu: {{ .Values.resources.requests.cpu }}
+        volumeMounts:
+        - name: config
+          mountPath: /config
+      volumes:
+      - name: config
+        configMap:
+          name: {{ .Release.Name }}-config

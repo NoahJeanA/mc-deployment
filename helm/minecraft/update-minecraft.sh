@@ -1,8 +1,9 @@
 #!/bin/bash
-# update-minecraft.sh - Skript für Rolling Updates des Minecraft-Servers
+# zero-downtime-update.sh - Skript für Zero-Downtime-Updates mit BungeeCord
 
 # Konfiguration
-RELEASE_NAME="minecraft-server"  # Hier Ihren Release-Namen eintragen
+MINECRAFT_RELEASE="minecraft-server"
+BUNGEE_RELEASE="bungee"
 NAMESPACE="default"
 
 # Farben für Ausgabe
@@ -11,68 +12,50 @@ YELLOW='\033[0;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-echo -e "${YELLOW}Starting Minecraft Server Rolling Update...${NC}"
+echo -e "${YELLOW}Starting Zero-Downtime Minecraft Update...${NC}"
 
-# 1. Aktuelle Replikaanzahl ermitteln
-CURRENT_REPLICAS=$(kubectl get statefulset ${RELEASE_NAME} -n ${NAMESPACE} -o jsonpath='{.spec.replicas}')
-echo -e "Current replica count: ${GREEN}${CURRENT_REPLICAS}${NC}"
-
-# Wenn Server ausgeschaltet ist (0 Repliken), einfach nur die Konfiguration aktualisieren
-if [ "$CURRENT_REPLICAS" -eq "0" ]; then
-    echo -e "${YELLOW}Server is currently scaled down to 0. Updating configuration only...${NC}"
-    helm upgrade ${RELEASE_NAME} ../minecraft/ --set replicaCount=0
-    echo -e "${GREEN}Configuration updated. Server remains scaled down.${NC}"
-    exit 0
-fi
-
-# 2. Auf mindestens 2 Repliken hochskalieren, um ein Rolling Update zu erzwingen
-echo -e "${YELLOW}Scaling to 2 replicas to initiate rolling update...${NC}"
-helm upgrade ${RELEASE_NAME} ../minecraft/ --set replicaCount=2
-
-# 3. Warten, bis der zweite Pod bereit ist
-echo -e "${YELLOW}Waiting for new pod to be ready...${NC}"
-POD_NAME="${RELEASE_NAME}-1"
-kubectl wait --for=condition=ready pod/${POD_NAME} -n ${NAMESPACE} --timeout=300s
+# 1. Sicherstellen, dass beide Server-Instanzen laufen
+echo -e "${YELLOW}Ensuring both Minecraft server instances are running...${NC}"
+kubectl scale statefulset ${MINECRAFT_RELEASE} --replicas=2
+kubectl wait --for=condition=ready pod/${MINECRAFT_RELEASE}-0 pod/${MINECRAFT_RELEASE}-1 --timeout=300s
 
 if [ $? -ne 0 ]; then
-    echo -e "${RED}New pod failed to become ready within timeout. Rolling back...${NC}"
-    helm upgrade ${RELEASE_NAME} ../minecraft/ --set replicaCount=${CURRENT_REPLICAS}
+    echo -e "${RED}Failed to ensure both servers are running. Aborting.${NC}"
     exit 1
 fi
 
-echo -e "${GREEN}New pod ${POD_NAME} is ready!${NC}"
+# 2. Konfiguration aktualisieren (wird später wirksam)
+echo -e "${YELLOW}Updating Minecraft configuration...${NC}"
+helm upgrade ${MINECRAFT_RELEASE} ./minecraft/ --set replicaCount=2
 
-# 4. Warten, bis der neue Pod den Server vollständig gestartet hat (Optional)
-echo -e "${YELLOW}Waiting for Minecraft server to initialize in new pod...${NC}"
-ATTEMPTS=0
-MAX_ATTEMPTS=30
-while [ $ATTEMPTS -lt $MAX_ATTEMPTS ]; do
-    if kubectl logs ${POD_NAME} -n ${NAMESPACE} | grep -q "Done"; then
-        echo -e "${GREEN}Minecraft server initialized successfully in new pod!${NC}"
-        break
-    fi
-    ATTEMPTS=$((ATTEMPTS+1))
-    echo -n "."
-    sleep 10
-done
+# 3. Prüfen, ob Spieler verbunden sind
+echo -e "${YELLOW}Checking for connected players...${NC}"
+PLAYERS=$(kubectl exec -it ${MINECRAFT_RELEASE}-0 -- /bin/bash -c "cd /app && java -cp server.jar org.bukkit.craftbukkit.Main list | grep 'players online'")
+echo -e "Player status: ${GREEN}${PLAYERS}${NC}"
 
-if [ $ATTEMPTS -ge $MAX_ATTEMPTS ]; then
-    echo -e "${YELLOW}\nWarning: Could not confirm Minecraft server initialization in new pod within timeout.${NC}"
-    echo -e "${YELLOW}Continuing anyway...${NC}"
-fi
+# 4. Benachrichtigung an Spieler senden
+echo -e "${YELLOW}Notifying players about server update...${NC}"
+kubectl exec -it deployment/${BUNGEE_RELEASE} -- rcon-cli alert "Server-Update wird vorbereitet. Ihr werdet automatisch zum anderen Server umgeleitet."
 
-# 5. Zurück auf die ursprüngliche Replikaanzahl skalieren (in der Regel 1)
-echo -e "${YELLOW}Scaling back to ${CURRENT_REPLICAS} replica(s)...${NC}"
-helm upgrade ${RELEASE_NAME} ../minecraft/ --set replicaCount=${CURRENT_REPLICAS}
+# 5. Spieler zum Server 2 umleiten
+echo -e "${YELLOW}Redirecting players to server2...${NC}"
+kubectl exec -it deployment/${BUNGEE_RELEASE} -- rcon-cli send all server2
+sleep 5
 
-# 6. Warten, bis die überflüssigen Pods terminiert sind
-echo -e "${YELLOW}Waiting for excess pods to terminate...${NC}"
-sleep 30
+# 6. Server 1 neustarten
+echo -e "${YELLOW}Restarting minecraft-server-0 with new configuration...${NC}"
+kubectl delete pod ${MINECRAFT_RELEASE}-0
+kubectl wait --for=condition=ready pod/${MINECRAFT_RELEASE}-0 --timeout=180s
 
-# 7. Fertig!
-echo -e "${GREEN}Rolling update completed successfully!${NC}"
-echo -e "${GREEN}Your Minecraft server has been updated with the new configuration.${NC}"
+# 7. Spieler zurück zu Server 1 umleiten
+echo -e "${YELLOW}Redirecting players back to server1...${NC}"
+kubectl exec -it deployment/${BUNGEE_RELEASE} -- rcon-cli alert "Update abgeschlossen. Ihr werdet zum aktualisierten Server zurückgeleitet."
+kubectl exec -it deployment/${BUNGEE_RELEASE} -- rcon-cli send all server1
+sleep 5
 
-# Zeige Status der Pods
-echo -e "${YELLOW}Current pod status:${NC}"
-kubectl get pods -l app=${RELEASE_NAME} -n ${NAMESPACE}
+# 8. Server 2 neustarten
+echo -e "${YELLOW}Restarting minecraft-server-1 with new configuration...${NC}"
+kubectl delete pod ${MINECRAFT_RELEASE}-1
+kubectl wait --for=condition=ready pod/${MINECRAFT_RELEASE}-1 --timeout=180s
+
+echo -e "${GREEN}Zero-Downtime Update completed successfully!${NC}"

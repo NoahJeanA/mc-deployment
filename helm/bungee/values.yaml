@@ -1,0 +1,30 @@
+# Proxy-Konfiguration
+proxy:
+  type: "BUNGEECORD"  # Alternative: "VELOCITY"
+  image: "itzg/bungeecord:latest"
+  port: 25565
+  
+# Minecraft-Server-Konfiguration
+servers:
+  - name: "server1"
+    address: "minecraft-server-0.minecraft-server-headless"
+    port: 25565
+    isDefault: true
+  - name: "server2"
+    address: "minecraft-server-1.minecraft-server-headless"
+    port: 25565
+    isDefault: false
+
+# Ressourcen-Beschränkungen
+resources:
+  limits:
+    cpu: "1000m"
+    memory: "1Gi"
+  requests:
+    cpu: "500m"
+    memory: "512Mi"
+
+# Service-Konfiguration
+service:
+  type: NodePort
+  nodePort: 25565  # Gleicher Port wie Ihr aktueller Minecraft-Server

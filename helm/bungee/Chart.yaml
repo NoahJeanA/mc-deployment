@@ -1,0 +1,6 @@
+apiVersion: v2
+name: bungee
+description: BungeeCord Proxy für Minecraft Zero-Downtime Updates
+type: application
+version: 0.1.0
+appVersion: "latest"
