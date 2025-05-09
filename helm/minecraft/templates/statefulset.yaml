@@ -123,7 +123,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        command: ["/bin/sh", "-c"]
+        command: ["/bin/bash", "-c"]  # Wichtig: bash statt sh verwenden!
         args:
         - |
           # Serverstart-Skript mit verbesserter Fehlerbehandlung
@@ -176,16 +176,13 @@ spec:
           cd /app
           echo "Starting Minecraft server..."
           
-          # Trap einrichten für sauberes Herunterfahren
-          trap 'echo "Fange SIGTERM ab, fahre Server herunter..."; java -Xms128M -Xmx128M -cp server.jar org.bukkit.craftbukkit.Main stop; sleep 5; exit 0' SIGTERM
+          # ENTFERNT: problematische trap-Anweisung
           
           # Server mit voller Speicherausstattung starten
           java -Xmx{{ .Values.server.java.maxMemory }} -Xms{{ .Values.server.java.minMemory }} -jar server.jar nogui || {
             echo "SERVER CRASHED! Versuche ihn mit reduzierten Einstellungen neu zu starten..."
             java -Xmx1G -Xms1G -jar server.jar nogui
           }
-          
-          echo "Server beendet."
       volumes:
       - name: binary-volume
         persistentVolumeClaim:

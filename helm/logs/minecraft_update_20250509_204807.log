@@ -1,0 +1,726 @@
+2025-05-09 20:48:07,988 [INFO] Verwende Helm-Chart-Pfad: /run/user/1000/gvfs/sftp:host=192.168.0.165,port=4242,user=server/home/server/minecraft/mc-deployment/helm/minecraft
+2025-05-09 20:48:07,989 [INFO] === MINECRAFT ZERO-DOWNTIME UPDATE GESTARTET (20250509_204807) ===
+2025-05-09 20:48:07,990 [INFO] Release: minecraft-server, Namespace: default
+2025-05-09 20:48:07,991 [INFO] SCHRITT 1/12 (8%): Prüfe Serverstatus vor dem Update
+2025-05-09 20:48:07,992 [DEBUG] Verbindung zum RCON-Server 192.168.0.165:30575 wird hergestellt...
+2025-05-09 20:48:07,998 [INFO] SUCCESS: RCON-Verbindung hergestellt zu 192.168.0.165:30575
+2025-05-09 20:48:07,999 [DEBUG] RCON-Befehl wird gesendet: list
+2025-05-09 20:48:08,007 [DEBUG] RCON-Antwort: There are 1 of a max of 20 players online: StraussRiese456
+2025-05-09 20:48:08,008 [DEBUG] RCON-Verbindung getrennt
+2025-05-09 20:48:08,009 [INFO] Aktuell 1 Spieler online
+2025-05-09 20:48:08,010 [INFO] SCHRITT 2/12 (16%): Stelle sicher, dass Server 0 läuft
+2025-05-09 20:48:08,010 [INFO] Skaliere StatefulSet minecraft-server auf 1 Replicas...
+2025-05-09 20:48:08,011 [DEBUG] Ausführen: kubectl scale statefulset minecraft-server --replicas=1 -n default
+2025-05-09 20:48:08,074 [DEBUG] STDOUT:
+statefulset.apps/minecraft-server scaled
+2025-05-09 20:48:08,075 [INFO] SUCCESS: StatefulSet auf 1 skaliert
+2025-05-09 20:48:08,076 [INFO] Warte auf Bereitschaft von Pod minecraft-server-0...
+2025-05-09 20:48:08,077 [DEBUG] Ausführen: kubectl wait --for=condition=ready pod/minecraft-server-0 --timeout=300s -n default
+2025-05-09 20:48:08,225 [DEBUG] STDOUT:
+pod/minecraft-server-0 condition met
+2025-05-09 20:48:08,227 [INFO] SUCCESS: Pod minecraft-server-0 ist bereit
+2025-05-09 20:48:08,227 [INFO] Prüfe rsync-Verfügbarkeit im Pod minecraft-server-0...
+2025-05-09 20:48:08,228 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c command -v rsync
+2025-05-09 20:48:08,365 [ERROR] Befehl fehlgeschlagen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c command -v rsync
+2025-05-09 20:48:08,366 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+command terminated with exit code 127
+2025-05-09 20:48:08,366 [ERROR] Fehler beim Ausführen des Befehls 'command -v rsync' im Pod minecraft-server-0: Command '['kubectl', 'exec', '-i', 'minecraft-server-0', '-n', 'default', '--', '/bin/sh', '-c', 'command -v rsync']' returned non-zero exit status 127.
+2025-05-09 20:48:08,367 [WARNING] rsync nicht gefunden, versuche einfache Installation...
+2025-05-09 20:48:08,368 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c apk add --no-cache rsync 2>/dev/null || apt-get update && apt-get install -y rsync 2>/dev/null || echo 'INSTALLATION_FAILED'
+2025-05-09 20:48:14,674 [DEBUG] STDOUT:
+Get:1 http://deb.debian.org/debian bookworm InRelease [151 kB]
+Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
+Get:3 http://deb.debian.org/debian-security bookworm-security InRelease [48.0 kB]
+Get:4 http://deb.debian.org/debian bookworm/main amd64 Packages [8792 kB]
+Get:5 https://packages.adoptium.net/artifactory/deb bookworm InRelease [7507 B]
+Get:6 http://deb.debian.org/debian bookworm/main amd64 DEP-11 Metadata [4492 kB]
+Get:7 http://deb.debian.org/debian bookworm-updates/main amd64 Packages [512 B]
+Get:8 http://deb.debian.org/debian-security bookworm-security/main amd64 Packages [258 kB]
+Get:9 https://packages.adoptium.net/artifactory/deb bookworm/main amd64 Packages [11.8 kB]
+Fetched 13.8 MB in 3s (5478 kB/s)
+Reading package lists...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+The following additional packages will be installed:
+  libpopt0
+Suggested packages:
+  openssh-server python3-braceexpand
+The following NEW packages will be installed:
+  libpopt0 rsync
+0 upgraded, 2 newly installed, 0 to remove and 0 not upgraded.
+Need to get 462 kB of archives.
+After this operation, 1050 kB of additional disk space will be used.
+Get:1 http://deb.debian.org/debian bookworm/main amd64 libpopt0 amd64 1.19+dfsg-1 [43.3 kB]
+Get:2 http://deb.debian.org/debian bookworm/main amd64 rsync amd64 3.2.7-1+deb12u2 [419 kB]
+Fetched 462 kB in 0s (3800 kB/s)
+Selecting previously unselected package libpopt0:amd64.
+(Reading database ... 
+(Reading database ... 5%
+(Reading database ... 10%
+(Reading database ... 15%
+(Reading database ... 20%
+(Reading database ... 25%
+(Reading database ... 30%
+(Reading database ... 35%
+(Reading database ... 40%
+(Reading database ... 45%
+(Reading database ... 50%
+(Reading database ... 55%
+(Reading database ... 60%
+(Reading database ... 65%
+(Reading database ... 70%
+(Reading database ... 75%
+(Reading database ... 80%
+(Reading database ... 85%
+(Reading database ... 90%
+(Reading database ... 95%
+(Reading database ... 100%
+(Reading database ... 20502 files and directories currently installed.)
+Preparing to unpack .../libpopt0_1.19+dfsg-1_amd64.deb ...
+Unpacking libpopt0:amd64 (1.19+dfsg-1) ...
+Selecting previously unselected package rsync.
+Preparing to unpack .../rsync_3.2.7-1+deb12u2_amd64.deb ...
+Unpacking rsync (3.2.7-1+deb12u2) ...
+Setting up libpopt0:amd64 (1.19+dfsg-1) ...
+Setting up rsync (3.2.7-1+deb12u2) ...
+invoke-rc.d: could not determine current runlevel
+invoke-rc.d: policy-rc.d denied execution of start.
+Processing triggers for libc-bin (2.36-9+deb12u10) ...
+2025-05-09 20:48:14,677 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+W: https://packages.adoptium.net/artifactory/deb/dists/bookworm/InRelease: Key is stored in legacy trusted.gpg keyring (/etc/apt/trusted.gpg), see the DEPRECATION section in apt-key(8) for details.
+2025-05-09 20:48:14,678 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c command -v rsync
+2025-05-09 20:48:14,780 [DEBUG] STDOUT:
+/usr/bin/rsync
+2025-05-09 20:48:14,781 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:48:14,782 [INFO] SUCCESS: rsync erfolgreich installiert
+2025-05-09 20:48:14,782 [INFO] SCHRITT 3/12 (25%): Validiere Weltdaten vor dem Update
+2025-05-09 20:48:14,783 [INFO] Validiere active Weltdaten in Pod minecraft-server-0...
+2025-05-09 20:48:14,783 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c ls -la /scripts/validate-world.sh 2>/dev/null || echo 'SCRIPT_NOT_FOUND'
+2025-05-09 20:48:14,897 [DEBUG] STDOUT:
+-rwxr-xr-x 1 root root 3745 May  9 18:29 /scripts/validate-world.sh
+2025-05-09 20:48:14,897 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:48:14,898 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c /scripts/validate-world.sh active
+2025-05-09 20:48:15,029 [DEBUG] STDOUT:
+[2025-05-09 18:48:15] Starte Welt-Validierung für world
+[2025-05-09 18:48:15] Validiere aktive Weltdaten in /minecraft-world/world
+[2025-05-09 18:48:15] Starte Validierung der Minecraft-Welt: /minecraft-world/world
+[2025-05-09 18:48:15] level.dat gefunden und hat Größe: 1553 bytes
+[2025-05-09 18:48:15] Region-Dateien gefunden: 6
+[2025-05-09 18:48:15] [WARNING] 2 verdächtig kleine Region-Dateien gefunden
+[2025-05-09 18:48:15] Spielerdaten gefunden: 1
+[2025-05-09 18:48:15] Validierung abgeschlossen:
+[2025-05-09 18:48:15]   - Fehler gefunden: 0
+[2025-05-09 18:48:15]   - Warnungen gefunden: 1
+[2025-05-09 18:48:15] [WARNING] Weltdaten haben kleinere Probleme, sollten aber funktionieren.
+[2025-05-09 18:48:15] Validierung erfolgreich abgeschlossen.
+2025-05-09 20:48:15,030 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:48:15,031 [INFO] SUCCESS: Weltdatenvalidierung erfolgreich
+2025-05-09 20:48:15,032 [INFO] SCHRITT 4/12 (33%): Benachrichtige Spieler über bevorstehendes Update
+2025-05-09 20:48:15,032 [DEBUG] Verbindung zum RCON-Server 192.168.0.165:30575 wird hergestellt...
+2025-05-09 20:48:15,039 [INFO] SUCCESS: RCON-Verbindung hergestellt zu 192.168.0.165:30575
+2025-05-09 20:48:15,041 [DEBUG] RCON-Befehl wird gesendet: tellraw @a {"text":"§6§lServer-Update wird vorbereitet. Update wird mit minimaler Unterbrechung durchgeführt.","color":"gold","bold":true}
+2025-05-09 20:48:15,046 [DEBUG] RCON-Antwort: 
+2025-05-09 20:48:15,047 [DEBUG] RCON-Befehl wird gesendet: say §6§lServer-Update wird vorbereitet. Update wird mit minimaler Unterbrechung durchgeführt.
+2025-05-09 20:48:15,056 [DEBUG] RCON-Antwort: 
+2025-05-09 20:48:15,057 [INFO] SUCCESS: Spielerbenachrichtigung gesendet: §6§lServer-Update wird vorbereitet. Update wird mit minimaler Unterbrechung durchgeführt.
+2025-05-09 20:48:15,057 [DEBUG] RCON-Verbindung getrennt
+2025-05-09 20:48:15,058 [INFO] SCHRITT 5/12 (41%): Aktualisiere Minecraft-Konfiguration mit Helm
+2025-05-09 20:48:15,059 [INFO] Führe Helm-Upgrade für Release minecraft-server durch...
+2025-05-09 20:48:15,067 [DEBUG] Ausführen: helm upgrade minecraft-server /run/user/1000/gvfs/sftp:host=192.168.0.165,port=4242,user=server/home/server/minecraft/mc-deployment/helm/minecraft --set replicaCount=1 -n default
+2025-05-09 20:48:15,836 [DEBUG] STDOUT:
+Release "minecraft-server" has been upgraded. Happy Helming!
+NAME: minecraft-server
+LAST DEPLOYED: Fri May  9 20:48:15 2025
+NAMESPACE: default
+STATUS: deployed
+REVISION: 3
+TEST SUITE: None
+NOTES:
+Minecraft-Server wurde erfolgreich installiert!
+
+StatefulSet: minecraft-server
+Pod: minecraft-server-0
+Welt-PVC: minecraft-server-world
+Cash-PVC: minecraft-server-cash
+Server-Eigenschaften: minecraft-server-server-properties
+
+Um den Minecraft-Server zu steuern:
+- Einschalten: kubectl scale statefulset minecraft-server --replicas=1
+- Ausschalten: kubectl scale statefulset minecraft-server --replicas=0
+- Updates durchführen: ./update-minecraft.sh
+
+Verbinden mit dem Server:
+- Server: <NODE_IP>:30565
+- RCON: <NODE_IP>:30575
+
+Um die Logs des Servers anzuzeigen:
+  kubectl logs -f minecraft-server-0
+
+Erfolgreiche Installation!
+2025-05-09 20:48:15,837 [INFO] SUCCESS: Helm-Upgrade erfolgreich abgeschlossen
+2025-05-09 20:48:15,838 [INFO] SCHRITT 6/12 (50%): Speichere aktuelle Weltdaten
+2025-05-09 20:48:15,839 [DEBUG] Verbindung zum RCON-Server 192.168.0.165:30575 wird hergestellt...
+2025-05-09 20:48:15,846 [INFO] SUCCESS: RCON-Verbindung hergestellt zu 192.168.0.165:30575
+2025-05-09 20:48:15,847 [DEBUG] RCON-Befehl wird gesendet: tellraw @a {"text":"§6§lWeltdaten werden gespeichert...","color":"gold","bold":true}
+2025-05-09 20:48:15,859 [DEBUG] RCON-Antwort: 
+2025-05-09 20:48:15,859 [DEBUG] RCON-Befehl wird gesendet: say §6§lWeltdaten werden gespeichert...
+2025-05-09 20:48:15,865 [DEBUG] RCON-Antwort: 
+2025-05-09 20:48:15,865 [INFO] SUCCESS: Spielerbenachrichtigung gesendet: §6§lWeltdaten werden gespeichert...
+2025-05-09 20:48:15,866 [DEBUG] RCON-Verbindung getrennt
+2025-05-09 20:48:15,867 [DEBUG] Verbindung zum RCON-Server 192.168.0.165:30575 wird hergestellt...
+2025-05-09 20:48:15,874 [INFO] SUCCESS: RCON-Verbindung hergestellt zu 192.168.0.165:30575
+2025-05-09 20:48:15,875 [DEBUG] RCON-Befehl wird gesendet: save-all flush
+2025-05-09 20:48:16,182 [DEBUG] RCON-Antwort: Saving the game (this may take a moment!)Saved the game
+2025-05-09 20:48:16,183 [INFO] SUCCESS: Weltdaten gespeichert (save-all flush)
+2025-05-09 20:48:16,183 [DEBUG] RCON-Verbindung getrennt
+2025-05-09 20:48:19,184 [INFO] SCHRITT 7/12 (58%): Synchronisiere Weltdaten von Server 0 zu Backup
+2025-05-09 20:48:19,186 [DEBUG] Verbindung zum RCON-Server 192.168.0.165:30575 wird hergestellt...
+2025-05-09 20:48:19,194 [INFO] SUCCESS: RCON-Verbindung hergestellt zu 192.168.0.165:30575
+2025-05-09 20:48:19,195 [DEBUG] RCON-Befehl wird gesendet: tellraw @a {"text":"§6§lWeltdaten werden synchronisiert...","color":"gold","bold":true}
+2025-05-09 20:48:19,212 [DEBUG] RCON-Antwort: 
+2025-05-09 20:48:19,213 [DEBUG] RCON-Befehl wird gesendet: say §6§lWeltdaten werden synchronisiert...
+2025-05-09 20:48:19,218 [DEBUG] RCON-Antwort: 
+2025-05-09 20:48:19,219 [INFO] SUCCESS: Spielerbenachrichtigung gesendet: §6§lWeltdaten werden synchronisiert...
+2025-05-09 20:48:19,220 [DEBUG] RCON-Verbindung getrennt
+2025-05-09 20:48:19,221 [INFO] Synchronisiere Weltdaten zum Backup für Pod minecraft-server-0...
+2025-05-09 20:48:19,222 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c ls -la /scripts/world-sync.sh 2>/dev/null || echo 'SCRIPT_NOT_FOUND'
+2025-05-09 20:48:19,353 [DEBUG] STDOUT:
+-rwxr-xr-x 1 root root 3422 May  9 18:29 /scripts/world-sync.sh
+2025-05-09 20:48:19,354 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:48:19,354 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c /scripts/world-sync.sh to-backup
+2025-05-09 20:48:19,789 [DEBUG] STDOUT:
+[2025-05-09 18:48:19] Synchronisiere Weltdaten für world von Quelle zu Ziel...
+[2025-05-09 18:48:19] Erstelle Notfallbackup der Welt vor Änderungen...
+[2025-05-09 18:48:19] Notfallbackup erstellt: world_20250509_184819.tar.gz
+[2025-05-09 18:48:19] Kopiere von dieser Welt zu Backup-Welt...
+[2025-05-09 18:48:19] Kopiere Welt-Metadaten und Level-Daten...
+
+          1,552   0%    0.00kB/s    0:00:00  
+          1,552   0%    0.00kB/s    0:00:00 (xfr#1, to-chk=35/37)
+          3,105   0%    1.48MB/s    0:00:00 (xfr#2, to-chk=34/37)
+          3,153   0%    1.53MB/s    0:00:00 (xfr#3, to-chk=22/37)
+          3,227   0%    1.60MB/s    0:00:00 (xfr#4, to-chk=21/37)
+          3,275   0%    1.64MB/s    0:00:00 (xfr#5, to-chk=19/37)
+          3,349   0%    1.71MB/s    0:00:00 (xfr#6, to-chk=18/37)
+          3,397   0%    1.76MB/s    0:00:00 (xfr#7, to-chk=17/37)
+          3,471   0%    1.83MB/s    0:00:00 (xfr#8, to-chk=16/37)
+          4,202   0%    2.53MB/s    0:00:00 (xfr#9, to-chk=15/37)
+          4,250   0%    2.57MB/s    0:00:00 (xfr#10, to-chk=14/37)
+        455,125   5%  216.28MB/s    0:00:00 (xfr#11, to-chk=13/37)
+        623,974   7%  197.86MB/s    0:00:00 (xfr#12, to-chk=12/37)
+        623,974   7%  197.86MB/s    0:00:00 (xfr#13, to-chk=11/37)
+        623,974   7%  197.86MB/s    0:00:00 (xfr#14, to-chk=10/37)
+        623,974   7%  197.86MB/s    0:00:00 (xfr#15, to-chk=9/37) 
+        623,974   7%  197.86MB/s    0:00:00 (xfr#16, to-chk=8/37)
+        623,974   7%  197.86MB/s    0:00:00 (xfr#17, to-chk=7/37)
+        623,974   7%  197.86MB/s    0:00:00 (xfr#18, to-chk=6/37)
+      5,605,023  66%  667.99MB/s    0:00:00 (xfr#19, to-chk=5/37)
+      8,190,776  96%  709.99MB/s    0:00:00 (xfr#20, to-chk=4/37)
+      8,190,776  96%  709.99MB/s    0:00:00 (xfr#21, to-chk=3/37)
+      8,190,776  96%  709.99MB/s    0:00:00 (xfr#22, to-chk=2/37)
+      8,354,616  98%  663.84MB/s    0:00:00 (xfr#23, to-chk=1/37)
+      8,444,728 100%  671.00MB/s    0:00:00 (xfr#24, to-chk=0/37)
+      8,444,728 100%  671.00MB/s    0:00:00 (xfr#24, to-chk=0/37)
+      8,444,728 100%  671.00MB/s    0:00:00 (xfr#24, to-chk=0/37)
+      8,444,728 100%  671.00MB/s    0:00:00 (xfr#24, to-chk=0/37)
+      8,444,728 100%  671.00MB/s    0:00:00 (xfr#24, to-chk=0/37)
+      8,444,728 100%  671.00MB/s    0:00:00 (xfr#24, to-chk=0/37)
+      8,444,728 100%  671.00MB/s    0:00:00 (xfr#24, to-chk=0/37)
+      8,444,728 100%  671.00MB/s    0:00:00 (xfr#24, to-chk=0/37)
+      8,444,728 100%  671.00MB/s    0:00:00 (xfr#24, to-chk=0/37)
+      8,444,728 100%  671.00MB/s    0:00:00 (xfr#24, to-chk=0/37)
+      8,444,728 100%  671.00MB/s    0:00:00 (xfr#24, to-chk=0/37)
+      8,444,728 100%  671.00MB/s    0:00:00 (xfr#24, to-chk=0/37)
+      8,444,728 100%  671.00MB/s    0:00:00 (xfr#24, to-chk=0/37)
+      8,444,728 100%  671.00MB/s    0:00:00 (xfr#24, to-chk=0/37)
+[2025-05-09 18:48:19] Überprüfe Region-Dateien auf Integrität...
+[2025-05-09 18:48:20] Weltdaten wurden erfolgreich zum Backup synchronisiert.
+[2025-05-09 18:48:20] HINWEIS: Spielerdaten wurden bewusst nicht synchronisiert, um Datenverlust zu vermeiden.
+[2025-05-09 18:48:20] Synchronisation abgeschlossen!
+2025-05-09 20:48:19,790 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+tar: Removing leading `/' from member names
+tar: /minecraft-world/world/region/r.-1.-1.mca: file changed as we read it
+tar: /minecraft-world/world/region/r.-1.0.mca: file changed as we read it
+2025-05-09 20:48:19,791 [INFO] SUCCESS: Weltsynchronisierung zum Backup abgeschlossen
+2025-05-09 20:48:19,792 [INFO] Validiere backup Weltdaten in Pod minecraft-server-0...
+2025-05-09 20:48:19,793 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c ls -la /scripts/validate-world.sh 2>/dev/null || echo 'SCRIPT_NOT_FOUND'
+2025-05-09 20:48:19,904 [DEBUG] STDOUT:
+-rwxr-xr-x 1 root root 3745 May  9 18:29 /scripts/validate-world.sh
+2025-05-09 20:48:19,905 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:48:19,906 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c /scripts/validate-world.sh backup
+2025-05-09 20:48:20,033 [DEBUG] STDOUT:
+[2025-05-09 18:48:20] Starte Welt-Validierung für world
+[2025-05-09 18:48:20] Validiere Backup-Weltdaten in /backup-world/world
+[2025-05-09 18:48:20] Starte Validierung der Minecraft-Welt: /backup-world/world
+[2025-05-09 18:48:20] level.dat gefunden und hat Größe: 1552 bytes
+[2025-05-09 18:48:20] Region-Dateien gefunden: 6
+[2025-05-09 18:48:20] [WARNING] 2 verdächtig kleine Region-Dateien gefunden
+[2025-05-09 18:48:20] Spielerdaten gefunden: 0
+[2025-05-09 18:48:20] Validierung abgeschlossen:
+[2025-05-09 18:48:20]   - Fehler gefunden: 0
+[2025-05-09 18:48:20]   - Warnungen gefunden: 1
+[2025-05-09 18:48:20] [WARNING] Weltdaten haben kleinere Probleme, sollten aber funktionieren.
+[2025-05-09 18:48:20] Validierung erfolgreich abgeschlossen.
+2025-05-09 20:48:20,034 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:48:20,035 [INFO] SUCCESS: Weltdatenvalidierung erfolgreich
+2025-05-09 20:48:20,035 [INFO] SCHRITT 8/12 (66%): Starte zweiten Server mit Backup-Weltdaten
+2025-05-09 20:48:20,036 [INFO] Skaliere StatefulSet minecraft-server auf 2 Replicas...
+2025-05-09 20:48:20,037 [DEBUG] Ausführen: kubectl scale statefulset minecraft-server --replicas=2 -n default
+2025-05-09 20:48:20,084 [DEBUG] STDOUT:
+statefulset.apps/minecraft-server scaled
+2025-05-09 20:48:20,085 [INFO] SUCCESS: StatefulSet auf 2 skaliert
+2025-05-09 20:48:20,086 [INFO] Warte auf Bereitschaft von Pod minecraft-server-1...
+2025-05-09 20:48:20,086 [DEBUG] Ausführen: kubectl wait --for=condition=ready pod/minecraft-server-1 --timeout=300s -n default
+2025-05-09 20:49:33,513 [DEBUG] STDOUT:
+pod/minecraft-server-1 condition met
+2025-05-09 20:49:33,514 [INFO] SUCCESS: Pod minecraft-server-1 ist bereit
+2025-05-09 20:49:33,514 [INFO] SCHRITT 9/12 (75%): Lade Weltdaten aus Backup auf Server 1
+2025-05-09 20:49:33,515 [INFO] Synchronisiere Weltdaten vom Backup für Pod minecraft-server-1...
+2025-05-09 20:49:33,516 [DEBUG] Ausführen: kubectl exec -i minecraft-server-1 -n default -- /bin/sh -c ls -la /scripts/world-sync.sh 2>/dev/null || echo 'SCRIPT_NOT_FOUND'
+2025-05-09 20:49:33,615 [DEBUG] STDOUT:
+-rwxr-xr-x 1 root root 3422 May  9 18:48 /scripts/world-sync.sh
+2025-05-09 20:49:33,616 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:49:33,617 [DEBUG] Ausführen: kubectl exec -i minecraft-server-1 -n default -- /bin/sh -c /scripts/world-sync.sh from-backup
+2025-05-09 20:49:33,783 [DEBUG] STDOUT:
+[2025-05-09 18:49:33] Synchronisiere Weltdaten für world von Quelle zu Ziel...
+[2025-05-09 18:49:33] Erstelle Notfallbackup der Welt vor Änderungen...
+[2025-05-09 18:49:33] Notfallbackup erstellt: world_20250509_184933.tar.gz
+[2025-05-09 18:49:33] Kopiere von Backup-Welt zu dieser Welt...
+[2025-05-09 18:49:34] Lösche alte Weltdaten und kopiere vom Backup...
+[2025-05-09 18:49:34] Entferne alte Lock-Dateien und temporäre Dateien...
+[2025-05-09 18:49:34] Setze korrekte Berechtigungen für Weltdateien...
+[2025-05-09 18:49:34] Weltdaten wurden erfolgreich vom Backup synchronisiert.
+[2025-05-09 18:49:34] Server kann jetzt gestartet werden.
+[2025-05-09 18:49:34] Synchronisation abgeschlossen!
+2025-05-09 20:49:33,784 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+tar: Removing leading `/' from member names
+/scripts/world-sync.sh: line 74: rsync: command not found
+2025-05-09 20:49:33,785 [INFO] SUCCESS: Weltsynchronisierung vom Backup abgeschlossen
+2025-05-09 20:49:33,785 [INFO] Validiere active Weltdaten in Pod minecraft-server-1...
+2025-05-09 20:49:33,786 [DEBUG] Ausführen: kubectl exec -i minecraft-server-1 -n default -- /bin/sh -c ls -la /scripts/validate-world.sh 2>/dev/null || echo 'SCRIPT_NOT_FOUND'
+2025-05-09 20:49:33,903 [DEBUG] STDOUT:
+-rwxr-xr-x 1 root root 3745 May  9 18:48 /scripts/validate-world.sh
+2025-05-09 20:49:33,904 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:49:33,905 [DEBUG] Ausführen: kubectl exec -i minecraft-server-1 -n default -- /bin/sh -c /scripts/validate-world.sh active
+2025-05-09 20:49:34,055 [DEBUG] STDOUT:
+[2025-05-09 18:49:34] Starte Welt-Validierung für world
+[2025-05-09 18:49:34] Validiere aktive Weltdaten in /minecraft-world/world
+[2025-05-09 18:49:34] Starte Validierung der Minecraft-Welt: /minecraft-world/world
+[2025-05-09 18:49:34] level.dat gefunden und hat Größe: 1459 bytes
+[2025-05-09 18:49:34] Region-Dateien gefunden: 4
+[2025-05-09 18:49:34] [WARNING] 3 verdächtig kleine Region-Dateien gefunden
+[2025-05-09 18:49:34] Spielerdaten gefunden: 0
+[2025-05-09 18:49:34] Validierung abgeschlossen:
+[2025-05-09 18:49:34]   - Fehler gefunden: 0
+[2025-05-09 18:49:34]   - Warnungen gefunden: 1
+[2025-05-09 18:49:34] [WARNING] Weltdaten haben kleinere Probleme, sollten aber funktionieren.
+[2025-05-09 18:49:34] Validierung erfolgreich abgeschlossen.
+2025-05-09 20:49:34,056 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:49:34,056 [INFO] SUCCESS: Weltdatenvalidierung erfolgreich
+2025-05-09 20:49:34,057 [INFO] Ändere BungeeCord-Priorität zu Server 1...
+2025-05-09 20:49:34,057 [INFO] Ändere BungeeCord-Priorität zu Server 1...
+2025-05-09 20:49:34,058 [DEBUG] Ausführen: kubectl get pods -l app=bungee -n default -o jsonpath='{.items[0].metadata.name}'
+2025-05-09 20:49:34,098 [DEBUG] STDOUT:
+'bungee-7db885f685-glztg'
+2025-05-09 20:49:34,099 [DEBUG] Ausführen: kubectl exec -i bungee-7db885f685-glztg -n default -- /bin/bash -c "/scripts/bungee-script.sh switch 1"
+2025-05-09 20:49:34,220 [ERROR] Befehl fehlgeschlagen: kubectl exec -i bungee-7db885f685-glztg -n default -- /bin/bash -c "/scripts/bungee-script.sh switch 1"
+2025-05-09 20:49:34,221 [DEBUG] STDERR:
+/bin/bash: line 1: /scripts/bungee-script.sh switch 1: No such file or directory
+command terminated with exit code 127
+2025-05-09 20:49:34,221 [ERROR] Fehler beim Ausführen des Scripts /scripts/bungee-script.sh mit Argumenten switch 1: Command '['kubectl', 'exec', '-i', 'bungee-7db885f685-glztg', '-n', 'default', '--', '/bin/bash', '-c', '"/scripts/bungee-script.sh switch 1"']' returned non-zero exit status 127.
+2025-05-09 20:49:34,222 [WARNING] Konnte BungeeCord-Priorität nicht ändern
+2025-05-09 20:49:34,223 [DEBUG] Verbindung zum RCON-Server 192.168.0.165:30575 wird hergestellt...
+2025-05-09 20:49:34,231 [INFO] SUCCESS: RCON-Verbindung hergestellt zu 192.168.0.165:30575
+2025-05-09 20:49:34,232 [DEBUG] RCON-Befehl wird gesendet: tellraw @a {"text":"§6§lAlternativer Server ist bereit. Update wird fortgesetzt...","color":"gold","bold":true}
+2025-05-09 20:49:34,252 [DEBUG] RCON-Antwort: No player was found
+2025-05-09 20:49:34,253 [DEBUG] RCON-Befehl wird gesendet: say §6§lAlternativer Server ist bereit. Update wird fortgesetzt...
+2025-05-09 20:49:34,267 [DEBUG] RCON-Antwort: 
+2025-05-09 20:49:34,268 [INFO] SUCCESS: Spielerbenachrichtigung gesendet: §6§lAlternativer Server ist bereit. Update wird fortgesetzt...
+2025-05-09 20:49:34,268 [DEBUG] RCON-Verbindung getrennt
+2025-05-09 20:49:34,270 [INFO] SCHRITT 10/12 (83%): Fahre Server 0 herunter und starte ihn neu
+2025-05-09 20:49:34,270 [INFO] Fahre Minecraft-Server in Pod minecraft-server-0 sauber herunter...
+2025-05-09 20:49:34,271 [DEBUG] Verbindung zum RCON-Server 192.168.0.165:30575 wird hergestellt...
+2025-05-09 20:49:34,277 [INFO] SUCCESS: RCON-Verbindung hergestellt zu 192.168.0.165:30575
+2025-05-09 20:49:34,278 [INFO] Benachrichtige Spieler über Serverstop...
+2025-05-09 20:49:34,278 [DEBUG] RCON-Befehl wird gesendet: say §c§lServer wird für Update heruntergefahren in 10 Sekunden...
+2025-05-09 20:49:34,283 [DEBUG] RCON-Antwort: 
+2025-05-09 20:49:39,284 [DEBUG] RCON-Befehl wird gesendet: say §c§lServer wird für Update heruntergefahren in 5 Sekunden...
+2025-05-09 20:49:39,294 [DEBUG] RCON-Antwort: 
+2025-05-09 20:49:44,295 [INFO] Speichere Weltdaten...
+2025-05-09 20:49:44,298 [DEBUG] RCON-Befehl wird gesendet: save-all flush
+2025-05-09 20:49:44,394 [DEBUG] RCON-Antwort: Saving the game (this may take a moment!)Saved the game
+2025-05-09 20:49:47,395 [INFO] Sende Stop-Befehl an Server...
+2025-05-09 20:49:47,399 [DEBUG] RCON-Befehl wird gesendet: stop
+2025-05-09 20:49:47,408 [DEBUG] RCON-Antwort: Stopping the server
+2025-05-09 20:49:47,409 [DEBUG] RCON-Verbindung getrennt
+2025-05-09 20:49:47,409 [INFO] Warte auf Server-Shutdown...
+2025-05-09 20:49:47,410 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c pgrep -f 'java.*server.jar' || echo 'STOPPED'
+2025-05-09 20:49:47,549 [DEBUG] STDOUT:
+1
+184
+1983
+2025-05-09 20:49:47,550 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:49:47,551 [DEBUG] Server läuft noch, warte... (1/30)
+2025-05-09 20:49:48,552 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c pgrep -f 'java.*server.jar' || echo 'STOPPED'
+2025-05-09 20:49:48,688 [DEBUG] STDOUT:
+1
+184
+1990
+2025-05-09 20:49:48,689 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:49:48,690 [DEBUG] Server läuft noch, warte... (2/30)
+2025-05-09 20:49:49,691 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c pgrep -f 'java.*server.jar' || echo 'STOPPED'
+2025-05-09 20:49:49,828 [DEBUG] STDOUT:
+1
+184
+1997
+2025-05-09 20:49:49,829 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:49:49,829 [DEBUG] Server läuft noch, warte... (3/30)
+2025-05-09 20:49:50,830 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c pgrep -f 'java.*server.jar' || echo 'STOPPED'
+2025-05-09 20:49:50,968 [DEBUG] STDOUT:
+1
+184
+2009
+2025-05-09 20:49:50,969 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:49:50,970 [DEBUG] Server läuft noch, warte... (4/30)
+2025-05-09 20:49:51,971 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c pgrep -f 'java.*server.jar' || echo 'STOPPED'
+2025-05-09 20:49:52,108 [DEBUG] STDOUT:
+1
+184
+2016
+2025-05-09 20:49:52,109 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:49:52,110 [DEBUG] Server läuft noch, warte... (5/30)
+2025-05-09 20:49:53,111 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c pgrep -f 'java.*server.jar' || echo 'STOPPED'
+2025-05-09 20:49:53,264 [DEBUG] STDOUT:
+1
+184
+2023
+2025-05-09 20:49:53,265 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:49:53,266 [DEBUG] Server läuft noch, warte... (6/30)
+2025-05-09 20:49:54,267 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c pgrep -f 'java.*server.jar' || echo 'STOPPED'
+2025-05-09 20:49:54,404 [DEBUG] STDOUT:
+1
+184
+2030
+2025-05-09 20:49:54,405 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:49:54,406 [DEBUG] Server läuft noch, warte... (7/30)
+2025-05-09 20:49:55,407 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c pgrep -f 'java.*server.jar' || echo 'STOPPED'
+2025-05-09 20:49:55,552 [DEBUG] STDOUT:
+1
+184
+2045
+2025-05-09 20:49:55,553 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:49:55,554 [DEBUG] Server läuft noch, warte... (8/30)
+2025-05-09 20:49:56,555 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c pgrep -f 'java.*server.jar' || echo 'STOPPED'
+2025-05-09 20:49:56,700 [DEBUG] STDOUT:
+1
+184
+2052
+2025-05-09 20:49:56,701 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:49:56,701 [DEBUG] Server läuft noch, warte... (9/30)
+2025-05-09 20:49:57,702 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c pgrep -f 'java.*server.jar' || echo 'STOPPED'
+2025-05-09 20:49:57,832 [DEBUG] STDOUT:
+1
+184
+2059
+2025-05-09 20:49:57,833 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:49:57,833 [DEBUG] Server läuft noch, warte... (10/30)
+2025-05-09 20:49:58,834 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c pgrep -f 'java.*server.jar' || echo 'STOPPED'
+2025-05-09 20:49:58,956 [DEBUG] STDOUT:
+1
+184
+2066
+2025-05-09 20:49:58,957 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:49:58,958 [DEBUG] Server läuft noch, warte... (11/30)
+2025-05-09 20:49:59,958 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c pgrep -f 'java.*server.jar' || echo 'STOPPED'
+2025-05-09 20:50:00,095 [DEBUG] STDOUT:
+1
+184
+2073
+2025-05-09 20:50:00,096 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:50:00,097 [DEBUG] Server läuft noch, warte... (12/30)
+2025-05-09 20:50:01,097 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c pgrep -f 'java.*server.jar' || echo 'STOPPED'
+2025-05-09 20:50:01,244 [DEBUG] STDOUT:
+1
+184
+2080
+2025-05-09 20:50:01,245 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:50:01,245 [DEBUG] Server läuft noch, warte... (13/30)
+2025-05-09 20:50:02,246 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c pgrep -f 'java.*server.jar' || echo 'STOPPED'
+2025-05-09 20:50:02,348 [DEBUG] STDOUT:
+1
+184
+2087
+2025-05-09 20:50:02,349 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:50:02,350 [DEBUG] Server läuft noch, warte... (14/30)
+2025-05-09 20:50:03,350 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c pgrep -f 'java.*server.jar' || echo 'STOPPED'
+2025-05-09 20:50:03,463 [DEBUG] STDOUT:
+1
+184
+2094
+2025-05-09 20:50:03,464 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:50:03,465 [DEBUG] Server läuft noch, warte... (15/30)
+2025-05-09 20:50:04,466 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c pgrep -f 'java.*server.jar' || echo 'STOPPED'
+2025-05-09 20:50:04,582 [DEBUG] STDOUT:
+1
+184
+2101
+2025-05-09 20:50:04,583 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:50:04,584 [DEBUG] Server läuft noch, warte... (16/30)
+2025-05-09 20:50:05,585 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c pgrep -f 'java.*server.jar' || echo 'STOPPED'
+2025-05-09 20:50:05,684 [DEBUG] STDOUT:
+1
+184
+2116
+2025-05-09 20:50:05,685 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:50:05,686 [DEBUG] Server läuft noch, warte... (17/30)
+2025-05-09 20:50:06,687 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c pgrep -f 'java.*server.jar' || echo 'STOPPED'
+2025-05-09 20:50:06,803 [DEBUG] STDOUT:
+1
+184
+2123
+2025-05-09 20:50:06,804 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:50:06,805 [DEBUG] Server läuft noch, warte... (18/30)
+2025-05-09 20:50:07,806 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c pgrep -f 'java.*server.jar' || echo 'STOPPED'
+2025-05-09 20:50:07,908 [DEBUG] STDOUT:
+1
+184
+2130
+2025-05-09 20:50:07,909 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:50:07,909 [DEBUG] Server läuft noch, warte... (19/30)
+2025-05-09 20:50:08,910 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c pgrep -f 'java.*server.jar' || echo 'STOPPED'
+2025-05-09 20:50:09,023 [DEBUG] STDOUT:
+1
+184
+2137
+2025-05-09 20:50:09,024 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:50:09,025 [DEBUG] Server läuft noch, warte... (20/30)
+2025-05-09 20:50:10,026 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c pgrep -f 'java.*server.jar' || echo 'STOPPED'
+2025-05-09 20:50:10,155 [DEBUG] STDOUT:
+1
+184
+2144
+2025-05-09 20:50:10,156 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:50:10,157 [DEBUG] Server läuft noch, warte... (21/30)
+2025-05-09 20:50:11,158 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c pgrep -f 'java.*server.jar' || echo 'STOPPED'
+2025-05-09 20:50:11,260 [DEBUG] STDOUT:
+1
+184
+2151
+2025-05-09 20:50:11,261 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:50:11,261 [DEBUG] Server läuft noch, warte... (22/30)
+2025-05-09 20:50:12,262 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c pgrep -f 'java.*server.jar' || echo 'STOPPED'
+2025-05-09 20:50:12,380 [DEBUG] STDOUT:
+1
+184
+2158
+2025-05-09 20:50:12,380 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:50:12,381 [DEBUG] Server läuft noch, warte... (23/30)
+2025-05-09 20:50:13,382 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c pgrep -f 'java.*server.jar' || echo 'STOPPED'
+2025-05-09 20:50:13,503 [DEBUG] STDOUT:
+1
+184
+2165
+2025-05-09 20:50:13,504 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:50:13,504 [DEBUG] Server läuft noch, warte... (24/30)
+2025-05-09 20:50:14,505 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c pgrep -f 'java.*server.jar' || echo 'STOPPED'
+2025-05-09 20:50:14,608 [DEBUG] STDOUT:
+1
+184
+2172
+2025-05-09 20:50:14,609 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:50:14,609 [DEBUG] Server läuft noch, warte... (25/30)
+2025-05-09 20:50:15,610 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c pgrep -f 'java.*server.jar' || echo 'STOPPED'
+2025-05-09 20:50:15,738 [DEBUG] STDOUT:
+1
+184
+2187
+2025-05-09 20:50:15,739 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:50:15,740 [DEBUG] Server läuft noch, warte... (26/30)
+2025-05-09 20:50:16,741 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c pgrep -f 'java.*server.jar' || echo 'STOPPED'
+2025-05-09 20:50:16,879 [DEBUG] STDOUT:
+1
+184
+2194
+2025-05-09 20:50:16,880 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:50:16,881 [DEBUG] Server läuft noch, warte... (27/30)
+2025-05-09 20:50:17,882 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c pgrep -f 'java.*server.jar' || echo 'STOPPED'
+2025-05-09 20:50:18,031 [DEBUG] STDOUT:
+1
+184
+2201
+2025-05-09 20:50:18,032 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:50:18,032 [DEBUG] Server läuft noch, warte... (28/30)
+2025-05-09 20:50:19,033 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c pgrep -f 'java.*server.jar' || echo 'STOPPED'
+2025-05-09 20:50:19,186 [DEBUG] STDOUT:
+1
+184
+2208
+2025-05-09 20:50:19,187 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:50:19,188 [DEBUG] Server läuft noch, warte... (29/30)
+2025-05-09 20:50:20,189 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c pgrep -f 'java.*server.jar' || echo 'STOPPED'
+2025-05-09 20:50:20,347 [DEBUG] STDOUT:
+1
+184
+2215
+2025-05-09 20:50:20,348 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:50:20,349 [DEBUG] Server läuft noch, warte... (30/30)
+2025-05-09 20:50:21,350 [WARNING] Server reagiert nicht auf Stop-Befehl. Erzwinge Neustart.
+2025-05-09 20:50:21,351 [INFO] Lösche Pod minecraft-server-0 für Neustart...
+2025-05-09 20:50:21,352 [DEBUG] Ausführen: kubectl delete pod minecraft-server-0 -n default
+2025-05-09 20:51:21,414 [ERROR] Timeout beim Ausführen des Befehls: kubectl delete pod minecraft-server-0 -n default
+2025-05-09 20:51:21,418 [WARNING] Timeout beim Löschen des Pods. Fortfahren...
+2025-05-09 20:51:21,419 [INFO] Warte auf Bereitschaft von Pod minecraft-server-0...
+2025-05-09 20:51:21,420 [DEBUG] Ausführen: kubectl wait --for=condition=ready pod/minecraft-server-0 --timeout=300s -n default
+2025-05-09 20:51:21,569 [DEBUG] STDOUT:
+pod/minecraft-server-0 condition met
+2025-05-09 20:51:21,570 [INFO] SUCCESS: Pod minecraft-server-0 ist bereit
+2025-05-09 20:51:21,571 [INFO] SCHRITT 11/12 (91%): Synchronisiere Weltdaten vom Backup zurück zu Server 0
+2025-05-09 20:51:21,572 [INFO] Synchronisiere Weltdaten vom Backup für Pod minecraft-server-0...
+2025-05-09 20:51:21,572 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c ls -la /scripts/world-sync.sh 2>/dev/null || echo 'SCRIPT_NOT_FOUND'
+2025-05-09 20:51:21,693 [DEBUG] STDOUT:
+-rwxr-xr-x 1 root root 3422 May  9 18:29 /scripts/world-sync.sh
+2025-05-09 20:51:21,694 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:51:21,695 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c /scripts/world-sync.sh from-backup
+2025-05-09 20:51:22,247 [DEBUG] STDOUT:
+[2025-05-09 18:51:22] Synchronisiere Weltdaten für world von Quelle zu Ziel...
+[2025-05-09 18:51:22] Erstelle Notfallbackup der Welt vor Änderungen...
+[2025-05-09 18:51:22] Notfallbackup erstellt: world_20250509_185122.tar.gz
+[2025-05-09 18:51:22] Kopiere von Backup-Welt zu dieser Welt...
+[2025-05-09 18:51:22] Lösche alte Weltdaten und kopiere vom Backup...
+
+          1,552   0%    0.00kB/s    0:00:00  
+          1,552   0%    0.00kB/s    0:00:00 (xfr#1, to-chk=35/37)
+          3,105   0%    1.48MB/s    0:00:00 (xfr#2, to-chk=34/37)
+          3,153   0%    1.53MB/s    0:00:00 (xfr#3, to-chk=22/37)
+          3,227   0%    1.60MB/s    0:00:00 (xfr#4, to-chk=21/37)
+          3,275   0%    1.64MB/s    0:00:00 (xfr#5, to-chk=19/37)
+          3,349   0%    1.71MB/s    0:00:00 (xfr#6, to-chk=18/37)
+          3,397   0%    1.76MB/s    0:00:00 (xfr#7, to-chk=17/37)
+          3,471   0%    1.83MB/s    0:00:00 (xfr#8, to-chk=16/37)
+          4,202   0%    2.53MB/s    0:00:00 (xfr#9, to-chk=15/37)
+        455,077   5%  216.26MB/s    0:00:00 (xfr#10, to-chk=13/37)
+        623,926   7%  296.77MB/s    0:00:00 (xfr#11, to-chk=12/37)
+      5,604,975  66%  381.70MB/s    0:00:00 (xfr#12, to-chk=5/37) 
+      8,190,728  96%  371.90MB/s    0:00:00 (xfr#13, to-chk=4/37)
+      8,190,728  96%  371.90MB/s    0:00:00 (xfr#14, to-chk=3/37)
+      8,190,728  96%  371.90MB/s    0:00:00 (xfr#15, to-chk=2/37)
+      8,354,568  98%  346.35MB/s    0:00:00 (xfr#16, to-chk=1/37)
+      8,444,680  99%  335.50MB/s    0:00:00 (xfr#17, to-chk=0/37)
+      8,444,680  99%  335.50MB/s    0:00:00 (xfr#17, to-chk=0/37)
+      8,444,680  99%  335.50MB/s    0:00:00 (xfr#17, to-chk=0/37)
+      8,444,680  99%  335.50MB/s    0:00:00 (xfr#17, to-chk=0/37)
+      8,444,680  99%  335.50MB/s    0:00:00 (xfr#17, to-chk=0/37)
+      8,444,680  99%  335.50MB/s    0:00:00 (xfr#17, to-chk=0/37)
+      8,444,680  99%  335.50MB/s    0:00:00 (xfr#17, to-chk=0/37)
+      8,444,680  99%  335.50MB/s    0:00:00 (xfr#17, to-chk=0/37)
+      8,444,680  99%  335.50MB/s    0:00:00 (xfr#17, to-chk=0/37)
+      8,444,680  99%  335.50MB/s    0:00:00 (xfr#17, to-chk=0/37)
+      8,444,680  99%  335.50MB/s    0:00:00 (xfr#17, to-chk=0/37)
+      8,444,680  99%  335.50MB/s    0:00:00 (xfr#17, to-chk=0/37)
+      8,444,680  99%  335.50MB/s    0:00:00 (xfr#17, to-chk=0/37)
+      8,444,680  99%  335.50MB/s    0:00:00 (xfr#17, to-chk=0/37)
+[2025-05-09 18:51:22] Entferne alte Lock-Dateien und temporäre Dateien...
+[2025-05-09 18:51:22] Setze korrekte Berechtigungen für Weltdateien...
+[2025-05-09 18:51:22] Weltdaten wurden erfolgreich vom Backup synchronisiert.
+[2025-05-09 18:51:22] Server kann jetzt gestartet werden.
+[2025-05-09 18:51:22] Synchronisation abgeschlossen!
+2025-05-09 20:51:22,249 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+tar: Removing leading `/' from member names
+2025-05-09 20:51:22,250 [INFO] SUCCESS: Weltsynchronisierung vom Backup abgeschlossen
+2025-05-09 20:51:22,250 [INFO] Validiere active Weltdaten in Pod minecraft-server-0...
+2025-05-09 20:51:22,251 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c ls -la /scripts/validate-world.sh 2>/dev/null || echo 'SCRIPT_NOT_FOUND'
+2025-05-09 20:51:22,380 [DEBUG] STDOUT:
+-rwxr-xr-x 1 root root 3745 May  9 18:29 /scripts/validate-world.sh
+2025-05-09 20:51:22,381 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:51:22,381 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/sh -c /scripts/validate-world.sh active
+2025-05-09 20:51:22,521 [DEBUG] STDOUT:
+[2025-05-09 18:51:22] Starte Welt-Validierung für world
+[2025-05-09 18:51:22] Validiere aktive Weltdaten in /minecraft-world/world
+[2025-05-09 18:51:22] Starte Validierung der Minecraft-Welt: /minecraft-world/world
+[2025-05-09 18:51:22] level.dat gefunden und hat Größe: 1552 bytes
+[2025-05-09 18:51:22] Region-Dateien gefunden: 6
+[2025-05-09 18:51:22] [WARNING] 2 verdächtig kleine Region-Dateien gefunden
+[2025-05-09 18:51:22] Spielerdaten gefunden: 0
+[2025-05-09 18:51:22] Validierung abgeschlossen:
+[2025-05-09 18:51:22]   - Fehler gefunden: 0
+[2025-05-09 18:51:22]   - Warnungen gefunden: 1
+[2025-05-09 18:51:22] [WARNING] Weltdaten haben kleinere Probleme, sollten aber funktionieren.
+[2025-05-09 18:51:22] Validierung erfolgreich abgeschlossen.
+2025-05-09 20:51:22,522 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+2025-05-09 20:51:22,523 [INFO] SUCCESS: Weltdatenvalidierung erfolgreich
+2025-05-09 20:51:22,523 [INFO] Setze BungeeCord-Priorität zurück zu Server 0...
+2025-05-09 20:51:22,524 [INFO] Ändere BungeeCord-Priorität zu Server 0...
+2025-05-09 20:51:22,525 [DEBUG] Ausführen: kubectl get pods -l app=bungee -n default -o jsonpath='{.items[0].metadata.name}'
+2025-05-09 20:51:22,565 [DEBUG] STDOUT:
+'bungee-7db885f685-glztg'
+2025-05-09 20:51:22,566 [DEBUG] Ausführen: kubectl exec -i bungee-7db885f685-glztg -n default -- /bin/bash -c "/scripts/bungee-script.sh switch 0"
+2025-05-09 20:51:22,683 [ERROR] Befehl fehlgeschlagen: kubectl exec -i bungee-7db885f685-glztg -n default -- /bin/bash -c "/scripts/bungee-script.sh switch 0"
+2025-05-09 20:51:22,684 [DEBUG] STDERR:
+/bin/bash: line 1: /scripts/bungee-script.sh switch 0: No such file or directory
+command terminated with exit code 127
+2025-05-09 20:51:22,685 [ERROR] Fehler beim Ausführen des Scripts /scripts/bungee-script.sh mit Argumenten switch 0: Command '['kubectl', 'exec', '-i', 'bungee-7db885f685-glztg', '-n', 'default', '--', '/bin/bash', '-c', '"/scripts/bungee-script.sh switch 0"']' returned non-zero exit status 127.
+2025-05-09 20:51:22,686 [WARNING] Konnte BungeeCord-Priorität nicht zurücksetzen
+2025-05-09 20:51:22,686 [INFO] SCHRITT 12/12 (100%): Räume auf: Fahre Server 1 herunter
+2025-05-09 20:51:22,687 [DEBUG] Verbindung zum RCON-Server 192.168.0.165:30575 wird hergestellt...
+2025-05-09 20:51:22,694 [INFO] SUCCESS: RCON-Verbindung hergestellt zu 192.168.0.165:30575
+2025-05-09 20:51:22,695 [DEBUG] RCON-Befehl wird gesendet: tellraw @a {"text":"§a§lUpdate erfolgreich abgeschlossen!","color":"gold","bold":true}
+2025-05-09 20:51:22,713 [DEBUG] RCON-Antwort: 
+2025-05-09 20:51:22,714 [DEBUG] RCON-Befehl wird gesendet: say §a§lUpdate erfolgreich abgeschlossen!
+2025-05-09 20:51:22,728 [DEBUG] RCON-Antwort: 
+2025-05-09 20:51:22,729 [INFO] SUCCESS: Spielerbenachrichtigung gesendet: §a§lUpdate erfolgreich abgeschlossen!
+2025-05-09 20:51:22,729 [DEBUG] RCON-Verbindung getrennt
+2025-05-09 20:51:22,730 [INFO] Skaliere StatefulSet minecraft-server auf 1 Replicas...
+2025-05-09 20:51:22,730 [DEBUG] Ausführen: kubectl scale statefulset minecraft-server --replicas=1 -n default
+2025-05-09 20:51:22,785 [DEBUG] STDOUT:
+statefulset.apps/minecraft-server scaled
+2025-05-09 20:51:22,786 [INFO] SUCCESS: StatefulSet auf 1 skaliert
+2025-05-09 20:51:22,787 [INFO] SUCCESS: === UPDATE ERFOLGREICH ABGESCHLOSSEN (Dauer: 194.8s) ===
+2025-05-09 20:51:22,787 [INFO] Detailliertes Update-Protokoll wurde gespeichert unter: logs/minecraft_update_20250509_204807.log

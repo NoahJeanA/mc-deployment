@@ -1,0 +1,43 @@
+2025-05-09 20:42:51,186 [INFO] Verwende Helm-Chart-Pfad: /run/user/1000/gvfs/sftp:host=192.168.0.165,port=4242,user=server/home/server/minecraft/mc-deployment/helm/minecraft
+2025-05-09 20:42:51,186 [INFO] === MINECRAFT ZERO-DOWNTIME UPDATE GESTARTET (20250509_204251) ===
+2025-05-09 20:42:51,187 [INFO] Release: minecraft-server, Namespace: default
+2025-05-09 20:42:51,188 [INFO] SCHRITT 1/12 (8%): Prüfe Serverstatus vor dem Update
+2025-05-09 20:42:51,189 [DEBUG] Verbindung zum RCON-Server 192.168.0.165:30575 wird hergestellt...
+2025-05-09 20:42:51,195 [INFO] SUCCESS: RCON-Verbindung hergestellt zu 192.168.0.165:30575
+2025-05-09 20:42:51,196 [DEBUG] RCON-Befehl wird gesendet: list
+2025-05-09 20:42:51,201 [DEBUG] RCON-Antwort: There are 1 of a max of 20 players online: StraussRiese456
+2025-05-09 20:42:51,202 [DEBUG] RCON-Verbindung getrennt
+2025-05-09 20:42:51,203 [INFO] Aktuell 1 Spieler online
+2025-05-09 20:42:51,203 [INFO] SCHRITT 2/12 (16%): Stelle sicher, dass Server 0 läuft
+2025-05-09 20:42:51,204 [INFO] Skaliere StatefulSet minecraft-server auf 1 Replicas...
+2025-05-09 20:42:51,205 [DEBUG] Ausführen: kubectl scale statefulset minecraft-server --replicas=1 -n default
+2025-05-09 20:42:51,263 [DEBUG] STDOUT:
+statefulset.apps/minecraft-server scaled
+2025-05-09 20:42:51,264 [INFO] SUCCESS: StatefulSet auf 1 skaliert
+2025-05-09 20:42:51,265 [INFO] Warte auf Bereitschaft von Pod minecraft-server-0...
+2025-05-09 20:42:51,266 [DEBUG] Ausführen: kubectl wait --for=condition=ready pod/minecraft-server-0 --timeout=300s -n default
+2025-05-09 20:42:51,411 [DEBUG] STDOUT:
+pod/minecraft-server-0 condition met
+2025-05-09 20:42:51,411 [INFO] SUCCESS: Pod minecraft-server-0 ist bereit
+2025-05-09 20:42:51,412 [INFO] Prüfe rsync-Verfügbarkeit im Pod minecraft-server-0...
+2025-05-09 20:42:51,413 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/bash -c "which rsync || echo 'NOT_FOUND'"
+2025-05-09 20:42:51,519 [ERROR] Befehl fehlgeschlagen: kubectl exec -i minecraft-server-0 -n default -- /bin/bash -c "which rsync || echo 'NOT_FOUND'"
+2025-05-09 20:42:51,520 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+/bin/bash: line 1: which rsync || echo 'NOT_FOUND': command not found
+command terminated with exit code 127
+2025-05-09 20:42:51,520 [ERROR] Fehler beim Ausführen des Befehls 'which rsync || echo 'NOT_FOUND'' im Pod minecraft-server-0: Command '['kubectl', 'exec', '-i', 'minecraft-server-0', '-n', 'default', '--', '/bin/bash', '-c', '"which rsync || echo \'NOT_FOUND\'"']' returned non-zero exit status 127.
+2025-05-09 20:42:51,521 [INFO] SUCCESS: rsync ist im Pod verfügbar
+2025-05-09 20:42:51,522 [INFO] SCHRITT 3/12 (25%): Validiere Weltdaten vor dem Update
+2025-05-09 20:42:51,522 [INFO] Validiere active Weltdaten in Pod minecraft-server-0...
+2025-05-09 20:42:51,523 [DEBUG] Ausführen: kubectl exec -i minecraft-server-0 -n default -- /bin/bash -c "/scripts/validate-world.sh active"
+2025-05-09 20:42:51,631 [ERROR] Befehl fehlgeschlagen: kubectl exec -i minecraft-server-0 -n default -- /bin/bash -c "/scripts/validate-world.sh active"
+2025-05-09 20:42:51,632 [DEBUG] STDERR:
+Defaulted container "minecraft-java-container" out of: minecraft-java-container, wait-for-resources (init)
+/bin/bash: line 1: /scripts/validate-world.sh active: No such file or directory
+command terminated with exit code 127
+2025-05-09 20:42:51,632 [ERROR] Fehler beim Ausführen des Befehls '/scripts/validate-world.sh active' im Pod minecraft-server-0: Command '['kubectl', 'exec', '-i', 'minecraft-server-0', '-n', 'default', '--', '/bin/bash', '-c', '"/scripts/validate-world.sh active"']' returned non-zero exit status 127.
+2025-05-09 20:42:51,633 [ERROR] Ausführung der Weltdatenvalidierung fehlgeschlagen
+2025-05-09 20:42:51,634 [WARNING] Weltdaten sind möglicherweise beschädigt. Fortfahren?
+2025-05-09 20:42:51,634 [ERROR] Update abgebrochen. Verwenden Sie --force-restart, um trotzdem fortzufahren.
+2025-05-09 20:42:51,635 [ERROR] Update nicht erfolgreich abgeschlossen. Siehe Logdatei für Details.

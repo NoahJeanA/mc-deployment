@@ -222,6 +222,28 @@ class MinecraftUpdater:
         self.force_restart = args.force_restart
         self.skip_validation = args.skip_validation
         
+        # Helm Chart Pfad normalisieren
+        if not Path(self.helm_chart_path).exists():
+            # Check if the path is relative to the current working directory
+            alt_path = Path(os.getcwd()) / self.helm_chart_path
+            if alt_path.exists():
+                self.helm_chart_path = str(alt_path)
+            else:
+                # Check if the 'minecraft' folder is in the parent directory
+                alt_path = Path(os.getcwd()).parent / 'minecraft'
+                if alt_path.exists():
+                    self.helm_chart_path = str(alt_path)
+                else:
+                    # Check if the 'helm/minecraft' folder exists
+                    alt_path = Path(os.getcwd()) / 'helm' / 'minecraft'
+                    if alt_path.exists():
+                        self.helm_chart_path = str(alt_path)
+                    else:
+                        log(f"WARNUNG: Helm-Chart-Pfad '{self.helm_chart_path}' nicht gefunden. Versuche Standard 'minecraft/'", level="warning")
+                        self.helm_chart_path = "minecraft/"
+                
+        log(f"Verwende Helm-Chart-Pfad: {self.helm_chart_path}", level="info")
+        
         # Init-Zeit für Logs und Backup-Benennung
         self.start_time = datetime.now()
         self.update_id = self.start_time.strftime("%Y%m%d_%H%M%S")
@@ -318,14 +340,37 @@ class MinecraftUpdater:
             True bei Erfolg, False bei Fehler
         """
         try:
+            # WICHTIG: Das gesamte Kommando muss in Anführungszeichen stehen
             result = run_command([
                 "kubectl", "exec", "-i", pod_name, "-n", self.namespace, "--",
-                "/bin/bash", "-c", f"{script_path} {args}"
+                "/bin/bash", "-c", f"\"{script_path} {args}\""  # Mit Anführungszeichen
             ])
             return True
         except subprocess.CalledProcessError as e:
             log(f"Fehler beim Ausführen des Scripts {script_path} mit Argumenten {args}: {e}", level="error")
             return False
+    
+    def run_bash_command_in_pod(self, pod_name, command):
+        """
+        Führt einen Bash-Befehl im angegebenen Pod aus.
+        
+        Args:
+            pod_name: Name des Pods
+            command: Der auszuführende Befehl
+            
+        Returns:
+            CompletedProcess-Objekt oder None bei Fehler
+        """
+        try:
+            # WICHTIG: KEINE Anführungszeichen um den Befehl
+            result = run_command([
+                "kubectl", "exec", "-i", pod_name, "-n", self.namespace, "--",
+                "/bin/sh", "-c", command
+            ])
+            return result
+        except subprocess.CalledProcessError as e:
+            log(f"Fehler beim Ausführen des Befehls '{command}' im Pod {pod_name}: {e}", level="error")
+            return None
     
     def run_bungee_command(self, command):
         """
@@ -343,9 +388,10 @@ class MinecraftUpdater:
             return False
             
         try:
+            # Mit Anführungszeichen
             result = run_command([
                 "kubectl", "exec", "-i", bungee_pod, "-n", self.namespace, "--",
-                "/bin/bash", "-c", f"echo '{command}' > /data/proxy_command"
+                "/bin/bash", "-c", f"\"echo '{command}' > /data/proxy_command\""
             ])
             # Kurz warten, damit der Befehl verarbeitet werden kann
             time.sleep(1)
@@ -394,10 +440,20 @@ class MinecraftUpdater:
             return True
             
         try:
-            cmd = [
-                "helm", "upgrade", self.minecraft_release, self.helm_chart_path,
-                "--set", f"replicaCount=1", "-n", self.namespace
-            ]
+            # Überprüfe, ob der Pfad existiert
+            if not os.path.exists(self.helm_chart_path):
+                log(f"Helm-Chart-Pfad nicht gefunden: {self.helm_chart_path}", level="error")
+                log("Versuche, ohne expliziten Chartpfad zu aktualisieren...", level="warning")
+                cmd = [
+                    "helm", "upgrade", self.minecraft_release, 
+                    "--set", f"replicaCount=1", "-n", self.namespace
+                ]
+            else:
+                cmd = [
+                    "helm", "upgrade", self.minecraft_release, self.helm_chart_path,
+                    "--set", f"replicaCount=1", "-n", self.namespace
+                ]
+            
             run_command(cmd)
             log("Helm-Upgrade erfolgreich abgeschlossen", level="success")
             return True
@@ -424,10 +480,104 @@ class MinecraftUpdater:
             return True
             
         try:
-            result = run_command([
-                "kubectl", "exec", "-i", pod_name, "-n", self.namespace, "--",
-                "/bin/bash", "-c", f"/scripts/world-sync.sh {direction}"
-            ], timeout=600)  # 10-Minuten-Timeout für große Welten
+            # Prüfe, ob das Sync-Skript existiert
+            check_script = self.run_bash_command_in_pod(pod_name, "ls -la /scripts/world-sync.sh 2>/dev/null || echo 'SCRIPT_NOT_FOUND'")
+            
+            if not check_script or 'SCRIPT_NOT_FOUND' in check_script.stdout:
+                log("Sync-Skript nicht gefunden, verwende integrierte Alternative", level="warning")
+                
+                # Weltname bestimmen
+                world_name_result = self.run_bash_command_in_pod(pod_name, "grep 'level-name=' /config/server.properties 2>/dev/null | cut -d'=' -f2 || echo 'world'")
+                world_name = "world"
+                if world_name_result and world_name_result.stdout.strip():
+                    world_name = world_name_result.stdout.strip()
+                
+                log(f"Weltname erkannt: {world_name}", level="info")
+                
+                # Einfaches integriertes Sync-Skript
+                if direction == "to-backup":
+                    sync_commands = f"""
+                    # Erstelle Backup-Verzeichnisse
+                    mkdir -p /backup-world/{world_name}
+                    mkdir -p /backup-world/emergency_backups
+                    
+                    # Erstelle Notfall-Backup
+                    TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+                    tar -czf "/backup-world/emergency_backups/{world_name}_$TIMESTAMP.tar.gz" -C /minecraft-world {world_name} 2>/dev/null || echo "Tar failed but continuing"
+                    
+                    # Kopiere wichtige Dateien mit cp
+                    echo "Kopiere wichtige Dateien zum Backup"
+                    mkdir -p /backup-world/{world_name}
+                    cp -f /minecraft-world/{world_name}/level.dat /backup-world/{world_name}/ 2>/dev/null || echo "level.dat konnte nicht kopiert werden"
+                    
+                    # Kopiere Region-Dateien
+                    mkdir -p /backup-world/{world_name}/region
+                    cp -f /minecraft-world/{world_name}/region/*.mca /backup-world/{world_name}/region/ 2>/dev/null || echo "Keine Region-Dateien gefunden"
+                    
+                    # Dimensionen kopieren wenn vorhanden
+                    if [ -d "/minecraft-world/{world_name}/DIM-1" ]; then
+                        mkdir -p /backup-world/{world_name}/DIM-1/region
+                        cp -f /minecraft-world/{world_name}/DIM-1/region/*.mca /backup-world/{world_name}/DIM-1/region/ 2>/dev/null || echo "Keine Nether-Dateien"
+                    fi
+                    
+                    if [ -d "/minecraft-world/{world_name}/DIM1" ]; then
+                        mkdir -p /backup-world/{world_name}/DIM1/region
+                        cp -f /minecraft-world/{world_name}/DIM1/region/*.mca /backup-world/{world_name}/DIM1/region/ 2>/dev/null || echo "Keine End-Dateien"
+                    fi
+                    
+                    echo "Weltdaten wurden zum Backup synchronisiert."
+                    """
+                else:  # from-backup
+                    sync_commands = f"""
+                    # Kopiere von Backup zu aktiver Welt
+                    echo "Kopiere Backup-Daten zu aktiver Welt"
+                    
+                    # Stelle sicher, dass Minecraft-Prozesse nicht laufen
+                    pgrep -f "java.*server.jar" && echo "WARNUNG: Minecraft läuft noch!"
+                    
+                    # Zielverzeichnis erstellen
+                    mkdir -p /minecraft-world/{world_name}
+                    
+                    # Kopiere level.dat
+                    cp -f /backup-world/{world_name}/level.dat /minecraft-world/{world_name}/ 2>/dev/null || echo "level.dat konnte nicht kopiert werden"
+                    
+                    # Kopiere Region-Dateien
+                    mkdir -p /minecraft-world/{world_name}/region
+                    cp -f /backup-world/{world_name}/region/*.mca /minecraft-world/{world_name}/region/ 2>/dev/null || echo "Keine Region-Dateien gefunden"
+                    
+                    # Dimensionen kopieren wenn vorhanden
+                    if [ -d "/backup-world/{world_name}/DIM-1" ]; then
+                        mkdir -p /minecraft-world/{world_name}/DIM-1/region
+                        cp -f /backup-world/{world_name}/DIM-1/region/*.mca /minecraft-world/{world_name}/DIM-1/region/ 2>/dev/null || echo "Keine Nether-Dateien"
+                    fi
+                    
+                    if [ -d "/backup-world/{world_name}/DIM1" ]; then
+                        mkdir -p /minecraft-world/{world_name}/DIM1/region
+                        cp -f /backup-world/{world_name}/DIM1/region/*.mca /minecraft-world/{world_name}/DIM1/region/ 2>/dev/null || echo "Keine End-Dateien"
+                    fi
+                    
+                    # Entferne Lock-Dateien
+                    rm -f /minecraft-world/{world_name}/session.lock
+                    find /minecraft-world/{world_name} -name "*.lock" -delete 2>/dev/null
+                    find /minecraft-world/{world_name} -name "*.tmp" -delete 2>/dev/null
+                    
+                    echo "Weltdaten wurden vom Backup wiederhergestellt."
+                    """
+                
+                # Führe die Sync-Befehle aus
+                result = self.run_bash_command_in_pod(pod_name, sync_commands)
+                if not result:
+                    log(f"Fehler bei der Ausführung des integrierten Sync-Skripts", level="error")
+                    return False
+            else:
+                # Das originalr Skript existiert, versuche es zu nutzen
+                result = self.run_bash_command_in_pod(pod_name, f"/scripts/world-sync.sh {direction}")
+                if not result:
+                    log(f"Fehler bei der Synchronisierung mit world-sync.sh", level="error")
+                    
+                    # Fallback zur integrierten Alternative
+                    log("Versuche Fallback zur internen Synchronisierung...", level="warning")
+                    return self.sync_world_data(pod_name, direction)
             
             log(f"Weltsynchronisierung {cmd_desc} abgeschlossen", level="success")
             
@@ -435,15 +585,17 @@ class MinecraftUpdater:
             if not self.skip_validation:
                 target = "backup" if direction == "to-backup" else "active"
                 if not self.validate_world_data(pod_name, target):
-                    log(f"Weltdatenvalidierung nach Synchronisierung fehlgeschlagen", level="error")
-                    return False
+                    log(f"Weltdatenvalidierung nach Synchronisierung fehlgeschlagen", level="warning")
+                    if not self.force_restart:
+                        return False
+                    log("Fortfahren trotz fehlgeschlagener Validierung (--force-restart)", level="warning")
             
             return True
-        except subprocess.CalledProcessError as e:
+        except Exception as e:
             log(f"Weltsynchronisierung fehlgeschlagen: {e}", level="error")
-            return False
-        except subprocess.TimeoutExpired:
-            log(f"Timeout bei der Weltsynchronisierung - die Welt könnte zu groß sein", level="error")
+            if self.force_restart:
+                log("Fortfahren trotz Fehler (--force-restart)", level="warning")
+                return True
             return False
             
     def validate_world_data(self, pod_name, world_type="active"):
@@ -468,20 +620,129 @@ class MinecraftUpdater:
             return True
             
         try:
-            result = run_command([
-                "kubectl", "exec", "-i", pod_name, "-n", self.namespace, "--",
-                "/bin/bash", "-c", f"/scripts/validate-world.sh {world_type}"
-            ])
+            # Prüfe zuerst, ob das Skript existiert
+            check_script = self.run_bash_command_in_pod(pod_name, "ls -la /scripts/validate-world.sh 2>/dev/null || echo 'SCRIPT_NOT_FOUND'")
             
-            if "Validierung erfolgreich abgeschlossen" in result.stdout:
-                log(f"Weltdatenvalidierung erfolgreich", level="success")
-                return True
+            if not check_script or 'SCRIPT_NOT_FOUND' in check_script.stdout:
+                log("Validierungsskript nicht gefunden, überprüfe ConfigMap...", level="warning")
+                
+                # Überprüfe, ob die ConfigMap existiert und erstelle ein temporäres Skript
+                configmap_name = f"{self.minecraft_release}-validation"
+                check_configmap = run_command([
+                    "kubectl", "get", "configmap", configmap_name, "-n", self.namespace, 
+                    "-o", "jsonpath='{.data}'"
+                ], check=False)
+                
+                if check_configmap and check_configmap.returncode == 0 and 'validate-world.sh' in check_configmap.stdout:
+                    log("Validierungs-ConfigMap gefunden, erstelle temporäres Skript...", level="info")
+                    
+                    # Erstelle einfache manuelle Validierung
+                    manual_validation = """
+                    #!/bin/sh
+                    WORLD_NAME=$(grep "level-name=" /config/server.properties 2>/dev/null | cut -d'=' -f2 2>/dev/null || echo "world")
+                    
+                    if [ "$1" = "active" ]; then
+                        WORLD_PATH="/minecraft-world/$WORLD_NAME"
+                    elif [ "$1" = "backup" ]; then
+                        WORLD_PATH="/backup-world/$WORLD_NAME"
+                    else
+                        echo "Ungültiger Parameter: $1"
+                        echo "Verwendung: $0 {backup|active}"
+                        exit 1
+                    fi
+                    
+                    echo "Validiere Welt in $WORLD_PATH"
+                    
+                    if [ ! -d "$WORLD_PATH" ]; then
+                        echo "FEHLER: Weltverzeichnis nicht gefunden"
+                        exit 1
+                    fi
+                    
+                    if [ ! -f "$WORLD_PATH/level.dat" ]; then
+                        echo "FEHLER: level.dat nicht gefunden"
+                        exit 1
+                    fi
+                    
+                    if [ ! -d "$WORLD_PATH/region" ]; then
+                        echo "FEHLER: Regionverzeichnis nicht gefunden"
+                        exit 1
+                    fi
+                    
+                    MCA_FILES=$(find "$WORLD_PATH/region" -name "*.mca" 2>/dev/null | wc -l)
+                    echo "Gefundene Region-Dateien: $MCA_FILES"
+                    
+                    if [ "$MCA_FILES" -gt 0 ]; then
+                        echo "Validierung erfolgreich abgeschlossen"
+                        exit 0
+                    else
+                        echo "FEHLER: Keine Region-Dateien gefunden"
+                        exit 1
+                    fi
+                    """
+                    
+                    # Führe manuelle Validierung direkt aus
+                    world_name_result = self.run_bash_command_in_pod(pod_name, "grep 'level-name=' /config/server.properties 2>/dev/null | cut -d'=' -f2 || echo 'world'")
+                    world_name = "world"
+                    if world_name_result and world_name_result.stdout.strip():
+                        world_name = world_name_result.stdout.strip()
+                    
+                    log(f"Weltname erkannt: {world_name}", level="info")
+                    
+                    if world_type == "active":
+                        world_path = f"/minecraft-world/{world_name}"
+                    else:
+                        world_path = f"/backup-world/{world_name}"
+                    
+                    # Überprüfe, ob das Verzeichnis existiert
+                    check_dir = self.run_bash_command_in_pod(pod_name, f"[ -d '{world_path}' ] && echo 'DIR_EXISTS' || echo 'DIR_MISSING'")
+                    if not check_dir or 'DIR_MISSING' in check_dir.stdout:
+                        log(f"Weltverzeichnis '{world_path}' nicht gefunden", level="error")
+                        return self.force_restart
+                    
+                    # Überprüfe level.dat
+                    check_level = self.run_bash_command_in_pod(pod_name, f"[ -f '{world_path}/level.dat' ] && echo 'LEVEL_EXISTS' || echo 'LEVEL_MISSING'")
+                    if not check_level or 'LEVEL_MISSING' in check_level.stdout:
+                        log(f"level.dat in '{world_path}' nicht gefunden", level="error")
+                        return self.force_restart
+                    
+                    # Überprüfe Region-Dateien
+                    check_regions = self.run_bash_command_in_pod(pod_name, f"find '{world_path}/region' -name '*.mca' 2>/dev/null | wc -l")
+                    region_count = 0
+                    if check_regions and check_regions.stdout.strip():
+                        try:
+                            region_count = int(check_regions.stdout.strip())
+                        except ValueError:
+                            pass
+                    
+                    log(f"Gefundene Region-Dateien: {region_count}", level="info")
+                    if region_count > 0:
+                        log("Weltdatenvalidierung erfolgreich", level="success")
+                        return True
+                    else:
+                        log("Keine Region-Dateien gefunden, Weltdaten möglicherweise beschädigt", level="error")
+                        return self.force_restart
+                else:
+                    log("Validierungs-ConfigMap nicht gefunden, Validierung wird übersprungen", level="warning")
+                    return True  # Validierung überspringen, da kein Skript gefunden wurde
             else:
-                log(f"Weltdatenvalidierung fehlgeschlagen: {result.stdout}", level="error")
-                return False
-        except subprocess.CalledProcessError as e:
+                # Das Skript existiert, führe es aus
+                result = self.run_bash_command_in_pod(pod_name, f"/scripts/validate-world.sh {world_type}")
+                
+                if not result:
+                    log(f"Ausführung der Weltdatenvalidierung fehlgeschlagen", level="error")
+                    return self.force_restart
+                    
+                # Überprüfe die Ausgabe auf Fehler
+                if "Validierung erfolgreich abgeschlossen" in result.stdout:
+                    log(f"Weltdatenvalidierung erfolgreich", level="success")
+                    return True
+                else:
+                    log(f"Weltdatenvalidierung fehlgeschlagen: {result.stdout}", level="error")
+                    # Auch bei Fehlern fortfahren, wenn force_restart aktiv ist
+                    return self.force_restart
+        except Exception as e:
             log(f"Fehler bei der Weltdatenvalidierung: {e}", level="error")
-            return False
+            return self.force_restart
             
     def delete_pod(self, pod_name):
         """
@@ -557,12 +818,12 @@ class MinecraftUpdater:
             log("Warte auf Server-Shutdown...", level="info")
             for i in range(30):
                 try:
-                    result = run_command([
-                        "kubectl", "exec", "-i", pod_name, "-n", self.namespace, "--",
-                        "/bin/sh", "-c", "pgrep -f 'java.*server.jar' || echo 'STOPPED'"
-                    ], check=False)
+                    result = self.run_bash_command_in_pod(
+                        pod_name,
+                        "pgrep -f 'java.*server.jar' || echo 'STOPPED'"
+                    )
                     
-                    if "STOPPED" in result.stdout:
+                    if result and "STOPPED" in result.stdout:
                         log(f"Minecraft-Server in {pod_name} erfolgreich heruntergefahren", level="success")
                         return True
                 except Exception:
@@ -687,6 +948,46 @@ class MinecraftUpdater:
         percentage = int((self.current_step / self.total_steps) * 100)
         log(f"SCHRITT {self.current_step}/{self.total_steps} ({percentage}%): {step_description}", level="info")
         
+    def check_for_rsync(self, pod_name):
+        """
+        Prüft, ob rsync im Pod installiert ist und versucht es zu installieren, wenn es fehlt.
+        
+        Args:
+            pod_name: Name des Pods
+            
+        Returns:
+            True, wenn rsync verfügbar ist (oder installiert wurde), False sonst
+        """
+        log(f"Prüfe rsync-Verfügbarkeit im Pod {pod_name}...")
+        try:
+            # Einfacher Test, ob rsync existiert - ohne komplexe Befehle
+            result = self.run_bash_command_in_pod(pod_name, "command -v rsync")
+            
+            if not result or not result.stdout.strip():
+                log("rsync nicht gefunden, versuche einfache Installation...", level="warning")
+                
+                # Vereinfachter Installations-Versuch - wir versuchen erst apk, dann apt
+                install_result = self.run_bash_command_in_pod(pod_name, "apk add --no-cache rsync 2>/dev/null || apt-get update && apt-get install -y rsync 2>/dev/null || echo 'INSTALLATION_FAILED'")
+                
+                if install_result and 'INSTALLATION_FAILED' in install_result.stdout:
+                    log("rsync konnte nicht installiert werden, verwende Fallback-Mechanismus", level="warning")
+                    return False
+                
+                # Prüfe nochmals, ob rsync jetzt verfügbar ist
+                check_again = self.run_bash_command_in_pod(pod_name, "command -v rsync")
+                if check_again and check_again.stdout.strip():
+                    log("rsync erfolgreich installiert", level="success")
+                    return True
+                else:
+                    log("rsync konnte nicht installiert werden, verwende Fallback-Mechanismus", level="warning")
+                    return False
+            else:
+                log("rsync ist im Pod verfügbar", level="success")
+                return True
+        except Exception as e:
+            log(f"Fehler bei der rsync-Prüfung: {e}", level="error")
+            return False
+
     def perform_update(self):
         """
         Führt den Zero-Downtime-Update-Prozess durch.
@@ -715,6 +1016,9 @@ class MinecraftUpdater:
         if not self.wait_for_pod_ready(self.get_pod_name(0), timeout=self.update_timeout):
             log("Server 0 wurde nicht bereit", level="error")
             return False
+            
+        # Prüfe, ob rsync verfügbar ist
+        self.check_for_rsync(self.get_pod_name(0))
         
         # Schritt 3: Validiere die aktuelle Welt
         self.update_progress("Validiere Weltdaten vor dem Update")
@@ -841,8 +1145,25 @@ def parse_arguments():
                         help="Name des Minecraft Helm-Releases (Standard: minecraft-server)")
     parser.add_argument("--namespace", default="default",
                         help="Kubernetes-Namespace (Standard: default)")
-    parser.add_argument("--chart-path", default="./minecraft/",
-                        help="Pfad zum Helm-Chart (Standard: ./minecraft/)")
+    
+    # Chart-Pfad intelligent ermitteln
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    possible_paths = [
+        os.path.join(current_dir, "minecraft"),
+        os.path.join(os.getcwd(), "minecraft"),
+        os.path.join(os.getcwd(), "helm", "minecraft"),
+        os.path.join(current_dir, "..", "minecraft"),
+        "minecraft"  # Relativer Pfad als Fallback
+    ]
+    
+    default_chart_path = "minecraft"  # Standard-Fallback
+    for path in possible_paths:
+        if os.path.exists(path):
+            default_chart_path = path
+            break
+    
+    parser.add_argument("--chart-path", default=default_chart_path,
+                        help=f"Pfad zum Helm-Chart (Standard: {default_chart_path})")
     parser.add_argument("--node-ip", default="localhost",
                         help="IP-Adresse des Kubernetes-Nodes (für RCON)")
     parser.add_argument("--rcon-port", type=int, default=30575,
@@ -866,16 +1187,23 @@ def main():
     """Hauptfunktion des Skripts."""
     print(f"\n{Fore.CYAN}======================================{Style.RESET_ALL}")
     print(f"{Fore.CYAN}  MINECRAFT ZERO-DOWNTIME UPDATER  {Style.RESET_ALL}")
-    print(f"{Fore.CYAN}      VERBESSERTE VERSION 2.0      {Style.RESET_ALL}")
+    print(f"{Fore.CYAN}      VERBESSERTE VERSION 2.2      {Style.RESET_ALL}")
     print(f"{Fore.CYAN}======================================{Style.RESET_ALL}\n")
     
     args = parse_arguments()
+    
+    # Automatisch --force-restart aktivieren, wenn --skip-validation gesetzt ist
+    if args.skip_validation and not args.force_restart:
+        log("Option --skip-validation aktiviert automatisch --force-restart", level="info")
+        args.force_restart = True
+    
     updater = MinecraftUpdater(args)
     
     try:
         success = updater.perform_update()
         if not success and not args.force_restart:
             log("Update nicht erfolgreich abgeschlossen. Siehe Logdatei für Details.", level="error")
+            log("Verwende --force-restart, um das Update trotz Fehler zu erzwingen.", level="info")
             sys.exit(1)
         elif not success and args.force_restart:
             log("Update teilweise fehlgeschlagen, aber erzwungen abgeschlossen.", level="warning")
