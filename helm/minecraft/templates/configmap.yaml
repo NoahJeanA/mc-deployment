@@ -4,8 +4,7 @@ metadata:
   name: {{ .Release.Name }}-server-properties
 data:
   server.properties: |
-    #Minecraft server properties
-    #Die Servereinstellungen für Ihren Minecraft-Server
+    #Minecraft server properties - optimiert für BungeeCord/Zero-Downtime-Updates
     allow-flight={{ .Values.server.properties.allowFlight }}
     allow-nether={{ .Values.server.properties.allowNether }}
     broadcast-console-to-ops=true
@@ -17,23 +16,25 @@ data:
     rcon.password={{ .Values.rcon.password | default "" }}
     rcon.port={{ .Values.rcon.port | default "25575" }}
     enable-status=true
+    enforce-secure-profile=false
     enforce-whitelist=false
     entity-broadcast-range-percentage=100
     force-gamemode=false
     function-permission-level=2
     gamemode={{ .Values.server.properties.gamemode }}
     generate-structures=true
-    generator-settings=
+    generator-settings={}
     hardcore=false
+    hide-online-players=false
     level-name={{ .Values.server.properties.levelName }}
     level-seed=
-    level-type=default
+    level-type=minecraft\:normal
     max-build-height=256
     max-players={{ .Values.server.properties.maxPlayers }}
     max-tick-time=60000
     max-world-size=29999984
     motd={{ .Values.server.properties.motd }}
-    network-compression-threshold=-1
+    network-compression-threshold=256
     online-mode={{ .Values.server.properties.onlineMode }}
     op-permission-level=4
     player-idle-timeout=0
@@ -41,17 +42,20 @@ data:
     pvp={{ .Values.server.properties.pvp }}
     query.port=25565
     rate-limit=0
+    require-resource-pack=false
     resource-pack=
+    resource-pack-prompt=
     resource-pack-sha1=
     server-ip=0.0.0.0
     bungeecord=true
     server-port=25565
-    snooper-enabled=true
+    simulation-distance=10
     spawn-animals=true
     spawn-monsters=true
     spawn-npcs=true
     spawn-protection=16
     sync-chunk-writes=true
+    text-filtering-config=
     use-native-transport=true
     view-distance={{ .Values.server.properties.viewDistance }}
     white-list=false

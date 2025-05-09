@@ -21,7 +21,7 @@ spec:
         # Diese Annotation erzwingt einen Neustart bei Änderungen der ConfigMap
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
     spec:
-      terminationGracePeriodSeconds: 60
+      terminationGracePeriodSeconds: 90
       initContainers:
       - name: wait-for-resources
         image: busybox
@@ -74,7 +74,7 @@ spec:
         lifecycle:
           preStop:
             exec:
-              command: ["/bin/sh", "-c", "echo 'Server wird heruntergefahren...' && cd /app && java -Xms128M -Xmx128M -cp server.jar org.bukkit.craftbukkit.Main stop"]
+              command: ["/bin/sh", "-c", "echo 'Server wird heruntergefahren...' && cd /app && java -Xms128M -Xmx128M -cp server.jar org.bukkit.craftbukkit.Main stop || (kill $(pgrep -f 'java.*server.jar') && sleep 10)"]
         ports:
         - containerPort: 25565
           name: minecraft
@@ -115,40 +115,77 @@ spec:
         - name: world-sync-volume
           mountPath: /scripts/world-sync.sh
           subPath: world-sync.sh
-        
+        - name: world-validation-volume
+          mountPath: /scripts/validate-world.sh
+          subPath: validate-world.sh
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
         command: ["/bin/sh", "-c"]
         args:
         - |
-          /scripts/links.sh &&
-          echo "Lese Weltnamen aus server.properties..." &&
-          WORLD_NAME=$(grep "level-name=" /config/server.properties | cut -d'=' -f2) &&
-          echo "Gefundener Weltname: $WORLD_NAME" &&
+          # Serverstart-Skript mit verbesserter Fehlerbehandlung
+          set -e
           
+          # Basisverzeichnisse vorbereiten
+          echo "Bereite Minecraft-Server vor..."
+          /scripts/links.sh
+          echo "Symlinks erstellt."
+          
+          # Weltname aus server.properties lesen
+          echo "Lese Weltnamen aus server.properties..." 
+          WORLD_NAME=$(grep "level-name=" /config/server.properties | cut -d'=' -f2)
+          echo "Gefundener Weltname: $WORLD_NAME"
+          
+          # Überprüfe Weltverzeichnisse
           if [ ! -d "/minecraft-world/$WORLD_NAME" ]; then
-            echo "Keine bestehende Welt im persistenten Speicher gefunden" &&
+            echo "Keine bestehende Welt im persistenten Speicher gefunden"
             
             if [ -d "/app/$WORLD_NAME" ]; then
-              echo "Lokale Welt gefunden - verschiebe sie in den persistenten Speicher" &&
-              mkdir -p "/minecraft-world/$WORLD_NAME" &&
-              mv "/app/$WORLD_NAME"/* "/minecraft-world/$WORLD_NAME/" &&
+              echo "Lokale Welt gefunden - verschiebe sie in den persistenten Speicher"
+              mkdir -p "/minecraft-world/$WORLD_NAME"
+              mv "/app/$WORLD_NAME"/* "/minecraft-world/$WORLD_NAME/" || true
               echo "Welt erfolgreich in persistenten Speicher verschoben"
             else
-              echo "Keine lokale Welt gefunden - erstelle neue Welt-Ordnerstruktur" &&
+              echo "Keine lokale Welt gefunden - erstelle neue Welt-Ordnerstruktur"
               mkdir -p "/minecraft-world/$WORLD_NAME"
             fi
           else
             echo "Bestehende Welt im persistenten Speicher gefunden"
-          fi &&
+          fi
           
-          /scripts/world-link.sh &&
-          sleep 10 &&
-          /scripts/cash.sh &&
-          rm -f /app/server.properties &&
-          cp /config/server.properties /app &&
+          # Weltverzeichnis verlinken
+          /scripts/world-link.sh
           
-          cd /app &&
-          echo "Starting Minecraft server..." &&
-          java -Xmx{{ .Values.server.java.maxMemory }} -Xms{{ .Values.server.java.minMemory }} -jar server.jar nogui
+          # 10 Sekunden warten, damit die Dateisystem-Operationen abgeschlossen werden können
+          sleep 10
+          
+          # Cash-Setup ausführen
+          /scripts/cash.sh
+          
+          # Server-Properties kopieren
+          rm -f /app/server.properties
+          cp /config/server.properties /app/
+          
+          # Weltdaten validieren
+          /scripts/validate-world.sh active || echo "WARNUNG: Weltdatenproblem erkannt, aber fahre fort..."
+          
+          # Minecraft-Server starten
+          cd /app
+          echo "Starting Minecraft server..."
+          
+          # Trap einrichten für sauberes Herunterfahren
+          trap 'echo "Fange SIGTERM ab, fahre Server herunter..."; java -Xms128M -Xmx128M -cp server.jar org.bukkit.craftbukkit.Main stop; sleep 5; exit 0' SIGTERM
+          
+          # Server mit voller Speicherausstattung starten
+          java -Xmx{{ .Values.server.java.maxMemory }} -Xms{{ .Values.server.java.minMemory }} -jar server.jar nogui || {
+            echo "SERVER CRASHED! Versuche ihn mit reduzierten Einstellungen neu zu starten..."
+            java -Xmx1G -Xms1G -jar server.jar nogui
+          }
+          
+          echo "Server beendet."
       volumes:
       - name: binary-volume
         persistentVolumeClaim:
@@ -180,6 +217,10 @@ spec:
       - name: world-sync-volume
         configMap:
           name: {{ .Release.Name }}-world-sync
+          defaultMode: 0755
+      - name: world-validation-volume
+        configMap:
+          name: {{ .Release.Name }}-validation
           defaultMode: 0755
   volumeClaimTemplates:
   - metadata:

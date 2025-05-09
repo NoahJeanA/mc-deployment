@@ -5,32 +5,237 @@ metadata:
 data:
   world-sync.sh: |
     #!/bin/bash
+    # Verbesserte Version des world-sync.sh Scripts mit Backup-Funktionalität
+    # und sicherem Kopieren von Minecraft-Weltdaten
+    
     WORLD_NAME=$(grep "level-name=" /config/server.properties | cut -d'=' -f2)
-    echo "Synchronisiere Weltdaten für $WORLD_NAME von Quelle zu Ziel..."
-
+    TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+    LOG_FILE="/tmp/world-sync.log"
+    
+    # Logging-Funktion
+    log() {
+      echo "[$(date +"%Y-%m-%d %H:%M:%S")] $1" | tee -a $LOG_FILE
+    }
+    
+    # Notfallbackup erstellen
+    backup_world() {
+      log "Erstelle Notfallbackup der Welt vor Änderungen..."
+      mkdir -p /backup-world/emergency_backups
+      tar -czf "/backup-world/emergency_backups/${WORLD_NAME}_${TIMESTAMP}.tar.gz" /minecraft-world/$WORLD_NAME
+      log "Notfallbackup erstellt: ${WORLD_NAME}_${TIMESTAMP}.tar.gz"
+    }
+    
+    # Hauptfunktion
+    log "Synchronisiere Weltdaten für $WORLD_NAME von Quelle zu Ziel..."
+    
     if [ "$1" == "to-backup" ]; then
-      # Sicherstellen, dass der Server alle Chunks geschrieben hat
-      # (Idealerweise über RCON einen save-all Befehl senden)
+      # Erstelle ein Sicherheitsbackup
+      backup_world
       
-      echo "Kopiere von dieser Welt zu Backup-Welt..."
+      log "Kopiere von dieser Welt zu Backup-Welt..."
       mkdir -p /backup-world/$WORLD_NAME
       
-      # Alle Dateien kopieren AUSSER session.lock
-      find /minecraft-world/$WORLD_NAME -type f -not -name "session.lock" -exec cp -f {} /backup-world/$WORLD_NAME/ \;
+      # Zuerst die Dimensionen und Welt-Metadaten kopieren
+      log "Kopiere Welt-Metadaten und Level-Daten..."
+      rsync -a --info=progress2 \
+        --exclude="session.lock" \
+        --exclude="*.lock" \
+        --exclude="*.tmp" \
+        --exclude="playerdata/*" \
+        --exclude="stats/*" \
+        --exclude="advancements/*" \
+        --exclude="region/r.*.mca.tmp" \
+        --exclude="DIM*/region/r.*.mca.tmp" \
+        /minecraft-world/$WORLD_NAME/ /backup-world/$WORLD_NAME/
+      
+      # Separat die Region-Dateien überprüfen
+      log "Überprüfe Region-Dateien auf Integrität..."
+      find /minecraft-world/$WORLD_NAME -path "*/region" -type d | while read region_dir; do
+        target_dir=$(echo $region_dir | sed 's|/minecraft-world/|/backup-world/|')
+        mkdir -p "$target_dir"
+        
+        # Kopiere nur vollständige Region-Dateien (keine temporären)
+        find "$region_dir" -name "r.*.mca" -type f -size +4k | while read region_file; do
+          target_file=$(echo $region_file | sed 's|/minecraft-world/|/backup-world/|')
+          cp -f "$region_file" "$target_file"
+        done
+      done
+      
+      log "Weltdaten wurden erfolgreich zum Backup synchronisiert."
+      log "HINWEIS: Spielerdaten wurden bewusst nicht synchronisiert, um Datenverlust zu vermeiden."
       
     elif [ "$1" == "from-backup" ]; then
-      echo "Kopiere von Backup-Welt zu dieser Welt..."
+      # Backup erstellen, falls etwas schief geht
+      if [ -d "/minecraft-world/$WORLD_NAME" ]; then
+        backup_world
+      fi
       
-      # Wichtig: Server muss gestoppt sein, bevor man hierher kommt
+      log "Kopiere von Backup-Welt zu dieser Welt..."
+      
+      # Wichtig: Server sollte gestoppt sein, bevor wir hierher kommen
       mkdir -p /minecraft-world/$WORLD_NAME
       
-      # Alle Dateien kopieren, session.lock wird auf dem Zielserver neu erstellt
-      cp -rf /backup-world/$WORLD_NAME/* /minecraft-world/$WORLD_NAME/
-      # Sicherstellen, dass keine alte session.lock existiert
+      # Komplett frische Welt aus dem Backup - vollständige Synchronisierung
+      log "Lösche alte Weltdaten und kopiere vom Backup..."
+      rsync -a --delete --info=progress2 \
+        --exclude="session.lock" \
+        /backup-world/$WORLD_NAME/ /minecraft-world/$WORLD_NAME/
+      
+      # Stelle sicher, dass keine Locks oder temporäre Dateien existieren
+      log "Entferne alte Lock-Dateien und temporäre Dateien..."
+      find /minecraft-world/$WORLD_NAME -name "*.lock" -delete
+      find /minecraft-world/$WORLD_NAME -name "*.tmp" -delete
       rm -f /minecraft-world/$WORLD_NAME/session.lock
+      
+      # Setze Berechtigungen
+      log "Setze korrekte Berechtigungen für Weltdateien..."
+      chmod -R 755 /minecraft-world/$WORLD_NAME
+      
+      log "Weltdaten wurden erfolgreich vom Backup synchronisiert."
+      log "Server kann jetzt gestartet werden."
     else
-      echo "Ungültiger Parameter: $1"
+      log "Ungültiger Parameter: $1"
+      log "Verwende 'to-backup' oder 'from-backup'"
       exit 1
     fi
-
-    echo "Synchronisation abgeschlossen!"
+    
+    log "Synchronisation abgeschlossen!"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-validation
+data:
+  validate-world.sh: |
+    #!/bin/bash
+    # Validierungsscript für Minecraft-Weltdaten
+    # Prüft, ob die Weltdaten konsistent und vollständig sind
+    
+    WORLD_NAME=$(grep "level-name=" /config/server.properties | cut -d'=' -f2)
+    LOG_FILE="/tmp/world-validation.log"
+    
+    # Logging-Funktion
+    log() {
+      echo "[$(date +"%Y-%m-%d %H:%M:%S")] $1" | tee -a $LOG_FILE
+    }
+    
+    # Fehler mit Level (WARNING, ERROR)
+    log_level() {
+      level=$1
+      shift
+      log "[$level] $@"
+    }
+    
+    # Hauptfunktion
+    validate_world() {
+      local world_path=$1
+      local errors=0
+      local warnings=0
+      
+      log "Starte Validierung der Minecraft-Welt: $world_path"
+      
+      # Prüfe, ob Welt-Verzeichnis existiert
+      if [ ! -d "$world_path" ]; then
+        log_level "ERROR" "Welt-Verzeichnis existiert nicht: $world_path"
+        return 1
+      fi
+      
+      # Prüfe Level-Datei
+      if [ ! -f "$world_path/level.dat" ]; then
+        log_level "ERROR" "level.dat fehlt - Welt ist beschädigt"
+        ((errors++))
+      else
+        log "level.dat gefunden und hat Größe: $(stat -c %s "$world_path/level.dat") bytes"
+      fi
+      
+      # Prüfe Regions-Verzeichnis
+      if [ ! -d "$world_path/region" ]; then
+        log_level "ERROR" "Region-Verzeichnis fehlt - Welt hat keine Chunks"
+        ((errors++))
+      else
+        # Zähle .mca Dateien
+        mca_count=$(find "$world_path/region" -name "r.*.mca" -type f | wc -l)
+        log "Region-Dateien gefunden: $mca_count"
+        
+        if [ $mca_count -eq 0 ]; then
+          log_level "ERROR" "Keine Region-Dateien gefunden - Welt ist leer oder beschädigt"
+          ((errors++))
+        fi
+        
+        # Prüfe auf beschädigte Region-Dateien (kleiner als 4KB)
+        small_regions=$(find "$world_path/region" -name "r.*.mca" -type f -size -4k | wc -l)
+        if [ $small_regions -gt 0 ]; then
+          log_level "WARNING" "$small_regions verdächtig kleine Region-Dateien gefunden"
+          ((warnings++))
+        fi
+        
+        # Prüfe temp-Dateien
+        tmp_files=$(find "$world_path" -name "*.tmp" | wc -l)
+        if [ $tmp_files -gt 0 ]; then
+          log_level "WARNING" "$tmp_files temporäre Dateien gefunden, die entfernt werden sollten"
+          ((warnings++))
+        fi
+      fi
+      
+      # Prüfe Player-Daten
+      if [ ! -d "$world_path/playerdata" ]; then
+        log_level "WARNING" "playerdata-Verzeichnis fehlt - keine Spielerdaten vorhanden"
+        ((warnings++))
+      else
+        player_files=$(find "$world_path/playerdata" -name "*.dat" | wc -l)
+        log "Spielerdaten gefunden: $player_files"
+      fi
+      
+      # Prüfe Nether und End-Dimensionen
+      if [ ! -d "$world_path/DIM-1" ]; then
+        log_level "WARNING" "Nether-Dimension (DIM-1) nicht gefunden"
+        ((warnings++))
+      fi
+      
+      if [ ! -d "$world_path/DIM1" ]; then
+        log_level "WARNING" "End-Dimension (DIM1) nicht gefunden"
+        ((warnings++))
+      fi
+      
+      # Zusammenfassung
+      log "Validierung abgeschlossen:"
+      log "  - Fehler gefunden: $errors"
+      log "  - Warnungen gefunden: $warnings"
+      
+      if [ $errors -gt 0 ]; then
+        log_level "ERROR" "Weltdaten sind möglicherweise beschädigt!"
+        return 1
+      elif [ $warnings -gt 0 ]; then
+        log_level "WARNING" "Weltdaten haben kleinere Probleme, sollten aber funktionieren."
+        return 0
+      else
+        log "Weltdaten scheinen fehlerfrei zu sein."
+        return 0
+      fi
+    }
+    
+    # Hauptprogramm
+    log "Starte Welt-Validierung für $WORLD_NAME"
+    
+    if [ "$1" == "backup" ]; then
+      world_path="/backup-world/$WORLD_NAME"
+      log "Validiere Backup-Weltdaten in $world_path"
+    elif [ "$1" == "active" ]; then
+      world_path="/minecraft-world/$WORLD_NAME"
+      log "Validiere aktive Weltdaten in $world_path"
+    else
+      log_level "ERROR" "Ungültiger Parameter: $1"
+      log "Verwendung: $0 {backup|active}"
+      exit 1
+    fi
+    
+    validate_world "$world_path"
+    exit_code=$?
+    
+    if [ $exit_code -eq 0 ]; then
+      log "Validierung erfolgreich abgeschlossen."
+    else
+      log_level "ERROR" "Validierung fehlgeschlagen! Die Weltdaten könnten beschädigt sein."
+    fi
+    
+    exit $exit_code
