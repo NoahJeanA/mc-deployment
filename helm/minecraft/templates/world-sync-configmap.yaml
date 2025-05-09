@@ -11,15 +11,15 @@ data:
     echo "Synchronisiere Weltdaten für $WORLD_NAME von Quelle zu Ziel..."
     
     if [ "$1" == "to-backup" ]; then
-      # Kopieren von Hauptwelt zu Backup
-      echo "Kopiere von Hauptwelt zu Backup-Welt..."
+      # Kopieren von dieser Welt zum Backup
+      echo "Kopiere von dieser Welt zu Backup-Welt..."
       mkdir -p /backup-world/$WORLD_NAME
-      cp -r /minecraft-world/$WORLD_NAME/* /backup-world/$WORLD_NAME/
+      cp -rf /minecraft-world/$WORLD_NAME/* /backup-world/$WORLD_NAME/
     elif [ "$1" == "from-backup" ]; then
-      # Kopieren von Backup zu Hauptwelt
-      echo "Kopiere von Backup-Welt zu Hauptwelt..."
+      # Kopieren vom Backup zu dieser Welt
+      echo "Kopiere von Backup-Welt zu dieser Welt..."
       mkdir -p /minecraft-world/$WORLD_NAME
-      cp -r /backup-world/$WORLD_NAME/* /minecraft-world/$WORLD_NAME/
+      cp -rf /backup-world/$WORLD_NAME/* /minecraft-world/$WORLD_NAME/
     else
       echo "Ungültiger Parameter: $1"
       exit 1

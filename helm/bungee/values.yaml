@@ -28,3 +28,8 @@ resources:
 service:
   type: NodePort
   nodePort: 30566 # Gleicher Port wie Ihr aktueller Minecraft-Server
+
+rcon:
+  enabled: true
+  password: "MeinSicheresRCONPasswort"
+  port: 25575

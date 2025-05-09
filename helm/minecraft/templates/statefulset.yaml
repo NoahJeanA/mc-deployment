@@ -58,11 +58,15 @@ spec:
             - /bin/sh
             - -c
             - |
-              if pgrep -f "java.*server.jar" > /dev/null && grep -q "Done.*For help" /app/logs/latest.log 2>/dev/null; then
-                exit 0
-              else
-                exit 1
+              if pgrep -f "java.*server.jar" > /dev/null; then
+                # Suche nach verschiedenen Log-Dateien
+                for log_file in /app/logs/latest.log /app/server.log /app/logs/latest.log; do
+                  if [ -f "$log_file" ] && grep -q "Done.*For help" "$log_file" 2>/dev/null; then
+                    exit 0
+                  fi
+                done
               fi
+              exit 1
           initialDelaySeconds: 60
           periodSeconds: 10
           timeoutSeconds: 5
@@ -166,9 +170,6 @@ spec:
       - name: server-properties-volume
         configMap:
           name: {{ .Release.Name }}-server-properties
-      - name: minecraft-world-volume
-        persistentVolumeClaim:
-          claimName: {{ .Release.Name }}-world
       - name: world-link-volume
         configMap:
           name: {{ .Values.initResources.releaseName }}-world-link
@@ -180,3 +181,11 @@ spec:
         configMap:
           name: {{ .Release.Name }}-world-sync
           defaultMode: 0755
+  volumeClaimTemplates:
+  - metadata:
+      name: minecraft-world-volume
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: {{ .Values.storage.world }}

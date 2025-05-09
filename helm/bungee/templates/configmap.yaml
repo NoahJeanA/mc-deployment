@@ -4,6 +4,10 @@ metadata:
   name: {{ .Release.Name }}-config
 data:
   config.yml: |
+    rcon:
+        enabled: true
+        password: "{{ .Values.rcon.password | default "MeinSicheresRCONPasswort" }}"
+        port: {{ .Values.rcon.port | default 25575 }}
     server_connect_timeout: 5000
     listeners:
     - query_port: 25565
