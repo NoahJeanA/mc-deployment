@@ -1,0 +1,89 @@
+2025-05-09 22:02:22,759 [INFO] Verwende Helm-Chart-Pfad: minecraft
+2025-05-09 22:02:22,760 [INFO] === MINECRAFT SERVER WIRD NEU GESTARTET ===
+2025-05-09 22:02:22,761 [INFO] === MINECRAFT SERVER WIRD GESTOPPT ===
+2025-05-09 22:02:22,762 [DEBUG] Ausführen: kubectl get statefulset minecraft-server -n default -o jsonpath='{.spec.replicas}'
+2025-05-09 22:02:22,811 [DEBUG] STDOUT:
+'1'
+2025-05-09 22:02:22,813 [DEBUG] Ausführen: kubectl get pods -l app=minecraft-server -n default -o jsonpath='{.items[0].metadata.name}'
+2025-05-09 22:02:22,865 [DEBUG] STDOUT:
+'minecraft-server-0'
+2025-05-09 22:02:22,867 [DEBUG] Verbindung zum RCON-Server 192.168.0.165:30575 wird hergestellt...
+2025-05-09 22:02:22,877 [INFO] SUCCESS: RCON-Verbindung hergestellt zu 192.168.0.165:30575
+2025-05-09 22:02:22,878 [DEBUG] RCON-Befehl wird gesendet: list
+2025-05-09 22:02:22,899 [DEBUG] RCON-Antwort: There are 1 of a max of 20 players online: StraussRiese456
+2025-05-09 22:02:22,900 [DEBUG] RCON-Verbindung getrennt
+2025-05-09 22:02:22,901 [WARNING] Es sind aktuell 1 Spieler online: StraussRiese456
+2025-05-09 22:02:22,902 [DEBUG] Verbindung zum RCON-Server 192.168.0.165:30575 wird hergestellt...
+2025-05-09 22:02:22,908 [INFO] SUCCESS: RCON-Verbindung hergestellt zu 192.168.0.165:30575
+2025-05-09 22:02:22,909 [DEBUG] RCON-Befehl wird gesendet: tellraw @a {"text":"§c§lServer wird in 30 Sekunden heruntergefahren!","color":"gold","bold":true}
+2025-05-09 22:02:22,928 [DEBUG] RCON-Antwort: 
+2025-05-09 22:02:22,928 [DEBUG] RCON-Befehl wird gesendet: say §c§lServer wird in 30 Sekunden heruntergefahren!
+2025-05-09 22:02:22,947 [DEBUG] RCON-Antwort: 
+2025-05-09 22:02:22,948 [INFO] SUCCESS: Spielerbenachrichtigung gesendet: §c§lServer wird in 30 Sekunden heruntergefahren!
+2025-05-09 22:02:22,949 [DEBUG] RCON-Verbindung getrennt
+2025-05-09 22:02:22,950 [DEBUG] Verbindung zum RCON-Server 192.168.0.165:30575 wird hergestellt...
+2025-05-09 22:02:22,959 [INFO] SUCCESS: RCON-Verbindung hergestellt zu 192.168.0.165:30575
+2025-05-09 22:02:22,960 [DEBUG] RCON-Befehl wird gesendet: tellraw @a {"text":"§c§lServer wird in 20 Sekunden heruntergefahren!","color":"gold","bold":true}
+2025-05-09 22:02:22,965 [DEBUG] RCON-Antwort: 
+2025-05-09 22:02:22,966 [DEBUG] RCON-Befehl wird gesendet: say §c§lServer wird in 20 Sekunden heruntergefahren!
+2025-05-09 22:02:22,971 [DEBUG] RCON-Antwort: 
+2025-05-09 22:02:22,972 [INFO] SUCCESS: Spielerbenachrichtigung gesendet: §c§lServer wird in 20 Sekunden heruntergefahren!
+2025-05-09 22:02:22,973 [DEBUG] RCON-Verbindung getrennt
+2025-05-09 22:02:32,974 [DEBUG] Verbindung zum RCON-Server 192.168.0.165:30575 wird hergestellt...
+2025-05-09 22:02:32,983 [INFO] SUCCESS: RCON-Verbindung hergestellt zu 192.168.0.165:30575
+2025-05-09 22:02:32,984 [DEBUG] RCON-Befehl wird gesendet: tellraw @a {"text":"§c§lServer wird in 10 Sekunden heruntergefahren!","color":"gold","bold":true}
+2025-05-09 22:02:32,990 [DEBUG] RCON-Antwort: 
+2025-05-09 22:02:32,991 [DEBUG] RCON-Befehl wird gesendet: say §c§lServer wird in 10 Sekunden heruntergefahren!
+2025-05-09 22:02:32,996 [DEBUG] RCON-Antwort: 
+2025-05-09 22:02:32,997 [INFO] SUCCESS: Spielerbenachrichtigung gesendet: §c§lServer wird in 10 Sekunden heruntergefahren!
+2025-05-09 22:02:32,998 [DEBUG] RCON-Verbindung getrennt
+2025-05-09 22:02:37,999 [DEBUG] Verbindung zum RCON-Server 192.168.0.165:30575 wird hergestellt...
+2025-05-09 22:02:38,008 [INFO] SUCCESS: RCON-Verbindung hergestellt zu 192.168.0.165:30575
+2025-05-09 22:02:38,009 [DEBUG] RCON-Befehl wird gesendet: tellraw @a {"text":"§c§lServer wird in 5 Sekunden heruntergefahren!","color":"gold","bold":true}
+2025-05-09 22:02:38,014 [DEBUG] RCON-Antwort: 
+2025-05-09 22:02:38,016 [DEBUG] RCON-Befehl wird gesendet: say §c§lServer wird in 5 Sekunden heruntergefahren!
+2025-05-09 22:02:38,021 [DEBUG] RCON-Antwort: 
+2025-05-09 22:02:38,022 [INFO] SUCCESS: Spielerbenachrichtigung gesendet: §c§lServer wird in 5 Sekunden heruntergefahren!
+2025-05-09 22:02:38,023 [DEBUG] RCON-Verbindung getrennt
+2025-05-09 22:02:43,024 [INFO] Speichere Weltdaten vor dem Herunterfahren...
+2025-05-09 22:02:43,028 [DEBUG] Verbindung zum RCON-Server 192.168.0.165:30575 wird hergestellt...
+2025-05-09 22:02:43,034 [INFO] SUCCESS: RCON-Verbindung hergestellt zu 192.168.0.165:30575
+2025-05-09 22:02:43,035 [DEBUG] RCON-Befehl wird gesendet: save-all flush
+2025-05-09 22:02:43,486 [DEBUG] RCON-Antwort: Saving the game (this may take a moment!)Saved the game
+2025-05-09 22:02:43,487 [INFO] SUCCESS: Weltdaten gespeichert (save-all flush)
+2025-05-09 22:02:43,488 [DEBUG] RCON-Verbindung getrennt
+2025-05-09 22:02:45,489 [INFO] Minecraft-Server wird ausschalten...
+2025-05-09 22:02:45,490 [DEBUG] Ausführen: kubectl scale statefulset minecraft-server --replicas=0 -n default
+2025-05-09 22:02:45,550 [DEBUG] STDOUT:
+statefulset.apps/minecraft-server scaled
+2025-05-09 22:02:45,551 [INFO] SUCCESS: StatefulSet wurde auf 0 Replica(s) skaliert
+2025-05-09 22:02:45,552 [INFO] Warte 10 Sekunden, bis der Server vollständig heruntergefahren ist...
+2025-05-09 22:02:55,553 [INFO] SUCCESS: Minecraft-Server wurde erfolgreich gestoppt
+2025-05-09 22:02:55,554 [INFO] Warte 10 Sekunden, bevor der Server wieder gestartet wird...
+2025-05-09 22:03:05,555 [INFO] === MINECRAFT SERVER WIRD GESTARTET ===
+2025-05-09 22:03:05,556 [DEBUG] Ausführen: kubectl get statefulset minecraft-server -n default -o jsonpath='{.spec.replicas}'
+2025-05-09 22:03:05,608 [DEBUG] STDOUT:
+'0'
+2025-05-09 22:03:05,610 [INFO] Minecraft-Server wird einschalten...
+2025-05-09 22:03:05,610 [DEBUG] Ausführen: kubectl scale statefulset minecraft-server --replicas=1 -n default
+2025-05-09 22:03:05,669 [DEBUG] STDOUT:
+statefulset.apps/minecraft-server scaled
+2025-05-09 22:03:05,670 [INFO] SUCCESS: StatefulSet wurde auf 1 Replica(s) skaliert
+2025-05-09 22:03:10,671 [DEBUG] Ausführen: kubectl get pods -l app=minecraft-server -n default -o jsonpath='{.items[0].metadata.name}'
+2025-05-09 22:03:10,719 [DEBUG] STDOUT:
+'minecraft-server-0'
+2025-05-09 22:03:10,720 [INFO] Warte auf Bereitschaft von Pod minecraft-server-0...
+2025-05-09 22:03:10,721 [DEBUG] Ausführen: kubectl wait --for=condition=ready pod/minecraft-server-0 --timeout=300s -n default
+2025-05-09 22:03:10,873 [DEBUG] STDOUT:
+pod/minecraft-server-0 condition met
+2025-05-09 22:03:10,874 [INFO] SUCCESS: Pod minecraft-server-0 ist bereit
+2025-05-09 22:03:10,875 [INFO] Warte weitere 20 Sekunden, um sicherzustellen, dass der Server vollständig gestartet ist...
+2025-05-09 22:03:30,876 [DEBUG] Verbindung zum RCON-Server 192.168.0.165:30575 wird hergestellt...
+2025-05-09 22:03:30,886 [INFO] SUCCESS: RCON-Verbindung hergestellt zu 192.168.0.165:30575
+2025-05-09 22:03:30,887 [DEBUG] RCON-Befehl wird gesendet: list
+2025-05-09 22:03:30,909 [DEBUG] RCON-Antwort: There are 0 of a max of 20 players online: 
+2025-05-09 22:03:30,910 [DEBUG] RCON-Verbindung getrennt
+2025-05-09 22:03:30,911 [INFO] SUCCESS: Server gestartet und bereit. Aktuell 0 Spieler online.
+2025-05-09 22:03:30,912 [INFO] SUCCESS: Minecraft-Server wurde erfolgreich neu gestartet
+2025-05-09 22:03:30,913 [INFO] SUCCESS: Operation 'restart' erfolgreich abgeschlossen.
+2025-05-09 22:03:30,914 [INFO] Detailliertes Protokoll wurde gespeichert unter: logs/minecraft_manager_20250509_220222.log

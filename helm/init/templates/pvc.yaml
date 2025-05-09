@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ .Release.Name }}-minecraft-binary-{{ .Values.minecraft.version | replace "." "-" }}
+  name: minecraft-binary-{{ .Values.minecraft.version | replace "." "-" }}
 spec:
   accessModes:
     - ReadWriteOnce
@@ -12,7 +12,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ .Release.Name }}-minecraft-eula
+  name: minecraft-eula
 spec:
   accessModes:
     - ReadWriteOnce

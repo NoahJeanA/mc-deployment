@@ -7,7 +7,7 @@ proxy:
 # Minecraft-Server-Konfiguration
 servers:
   - name: "minecraft"
-    address: "minecraft-server-headless" # Service-Name des Minecraft-Servers
+    address: "minecraft-server-service"  # Ändere dies von "minecraft-server-headless"
     port: 25565
     isDefault: true
 

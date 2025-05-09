@@ -1,0 +1,89 @@
+2025-05-09 21:40:52,592 [INFO] Verwende Helm-Chart-Pfad: minecraft
+2025-05-09 21:40:52,593 [INFO] === MINECRAFT SERVER WIRD NEU GESTARTET ===
+2025-05-09 21:40:52,593 [INFO] === MINECRAFT SERVER WIRD GESTOPPT ===
+2025-05-09 21:40:52,594 [DEBUG] Ausführen: kubectl get statefulset minecraft-server -n default -o jsonpath='{.spec.replicas}'
+2025-05-09 21:40:52,639 [DEBUG] STDOUT:
+'1'
+2025-05-09 21:40:52,640 [DEBUG] Ausführen: kubectl get pods -l app=minecraft-server -n default -o jsonpath='{.items[0].metadata.name}'
+2025-05-09 21:40:52,688 [DEBUG] STDOUT:
+'minecraft-server-0'
+2025-05-09 21:40:52,689 [DEBUG] Verbindung zum RCON-Server 192.168.0.165:30575 wird hergestellt...
+2025-05-09 21:40:52,693 [ERROR] RCON-Verbindung fehlgeschlagen: [Errno 111] Connection refused
+2025-05-09 21:40:52,693 [DEBUG] RCON-Befehl wird gesendet: list
+2025-05-09 21:40:52,694 [ERROR] RCON-Befehl fehlgeschlagen: [Errno 32] Broken pipe
+2025-05-09 21:40:52,695 [DEBUG] RCON-Verbindung getrennt
+2025-05-09 21:40:52,696 [DEBUG] Verbindung zum RCON-Server 192.168.0.165:30575 wird hergestellt...
+2025-05-09 21:40:52,699 [ERROR] RCON-Verbindung fehlgeschlagen: [Errno 111] Connection refused
+2025-05-09 21:40:52,700 [DEBUG] RCON-Befehl wird gesendet: tellraw @a {"text":"§c§lServer wird in 30 Sekunden heruntergefahren!","color":"gold","bold":true}
+2025-05-09 21:40:52,700 [ERROR] RCON-Befehl fehlgeschlagen: [Errno 32] Broken pipe
+2025-05-09 21:40:52,701 [DEBUG] RCON-Befehl wird gesendet: say §c§lServer wird in 30 Sekunden heruntergefahren!
+2025-05-09 21:40:52,702 [ERROR] RCON-Befehl fehlgeschlagen: [Errno 32] Broken pipe
+2025-05-09 21:40:52,702 [INFO] SUCCESS: Spielerbenachrichtigung gesendet: §c§lServer wird in 30 Sekunden heruntergefahren!
+2025-05-09 21:40:52,703 [DEBUG] RCON-Verbindung getrennt
+2025-05-09 21:40:52,704 [DEBUG] Verbindung zum RCON-Server 192.168.0.165:30575 wird hergestellt...
+2025-05-09 21:40:52,707 [ERROR] RCON-Verbindung fehlgeschlagen: [Errno 111] Connection refused
+2025-05-09 21:40:52,708 [DEBUG] RCON-Befehl wird gesendet: tellraw @a {"text":"§c§lServer wird in 20 Sekunden heruntergefahren!","color":"gold","bold":true}
+2025-05-09 21:40:52,709 [ERROR] RCON-Befehl fehlgeschlagen: [Errno 32] Broken pipe
+2025-05-09 21:40:52,709 [DEBUG] RCON-Befehl wird gesendet: say §c§lServer wird in 20 Sekunden heruntergefahren!
+2025-05-09 21:40:52,710 [ERROR] RCON-Befehl fehlgeschlagen: [Errno 32] Broken pipe
+2025-05-09 21:40:52,711 [INFO] SUCCESS: Spielerbenachrichtigung gesendet: §c§lServer wird in 20 Sekunden heruntergefahren!
+2025-05-09 21:40:52,711 [DEBUG] RCON-Verbindung getrennt
+2025-05-09 21:41:02,712 [DEBUG] Verbindung zum RCON-Server 192.168.0.165:30575 wird hergestellt...
+2025-05-09 21:41:02,717 [ERROR] RCON-Verbindung fehlgeschlagen: [Errno 111] Connection refused
+2025-05-09 21:41:02,718 [DEBUG] RCON-Befehl wird gesendet: tellraw @a {"text":"§c§lServer wird in 10 Sekunden heruntergefahren!","color":"gold","bold":true}
+2025-05-09 21:41:02,719 [ERROR] RCON-Befehl fehlgeschlagen: [Errno 32] Broken pipe
+2025-05-09 21:41:02,720 [DEBUG] RCON-Befehl wird gesendet: say §c§lServer wird in 10 Sekunden heruntergefahren!
+2025-05-09 21:41:02,721 [ERROR] RCON-Befehl fehlgeschlagen: [Errno 32] Broken pipe
+2025-05-09 21:41:02,721 [INFO] SUCCESS: Spielerbenachrichtigung gesendet: §c§lServer wird in 10 Sekunden heruntergefahren!
+2025-05-09 21:41:02,722 [DEBUG] RCON-Verbindung getrennt
+2025-05-09 21:41:07,723 [DEBUG] Verbindung zum RCON-Server 192.168.0.165:30575 wird hergestellt...
+2025-05-09 21:41:07,727 [ERROR] RCON-Verbindung fehlgeschlagen: [Errno 111] Connection refused
+2025-05-09 21:41:07,728 [DEBUG] RCON-Befehl wird gesendet: tellraw @a {"text":"§c§lServer wird in 5 Sekunden heruntergefahren!","color":"gold","bold":true}
+2025-05-09 21:41:07,730 [ERROR] RCON-Befehl fehlgeschlagen: [Errno 32] Broken pipe
+2025-05-09 21:41:07,731 [DEBUG] RCON-Befehl wird gesendet: say §c§lServer wird in 5 Sekunden heruntergefahren!
+2025-05-09 21:41:07,732 [ERROR] RCON-Befehl fehlgeschlagen: [Errno 32] Broken pipe
+2025-05-09 21:41:07,733 [INFO] SUCCESS: Spielerbenachrichtigung gesendet: §c§lServer wird in 5 Sekunden heruntergefahren!
+2025-05-09 21:41:07,734 [DEBUG] RCON-Verbindung getrennt
+2025-05-09 21:41:12,735 [INFO] Speichere Weltdaten vor dem Herunterfahren...
+2025-05-09 21:41:12,738 [DEBUG] Verbindung zum RCON-Server 192.168.0.165:30575 wird hergestellt...
+2025-05-09 21:41:12,742 [ERROR] RCON-Verbindung fehlgeschlagen: [Errno 111] Connection refused
+2025-05-09 21:41:12,743 [DEBUG] RCON-Befehl wird gesendet: save-all flush
+2025-05-09 21:41:12,744 [ERROR] RCON-Befehl fehlgeschlagen: [Errno 32] Broken pipe
+2025-05-09 21:41:12,745 [INFO] SUCCESS: Weltdaten gespeichert (save-all flush)
+2025-05-09 21:41:12,746 [DEBUG] RCON-Verbindung getrennt
+2025-05-09 21:41:14,747 [INFO] Minecraft-Server wird ausschalten...
+2025-05-09 21:41:14,750 [DEBUG] Ausführen: kubectl scale statefulset minecraft-server --replicas=0 -n default
+2025-05-09 21:41:14,809 [DEBUG] STDOUT:
+statefulset.apps/minecraft-server scaled
+2025-05-09 21:41:14,810 [INFO] SUCCESS: StatefulSet wurde auf 0 Replica(s) skaliert
+2025-05-09 21:41:14,811 [INFO] Warte 10 Sekunden, bis der Server vollständig heruntergefahren ist...
+2025-05-09 21:41:24,812 [INFO] SUCCESS: Minecraft-Server wurde erfolgreich gestoppt
+2025-05-09 21:41:24,815 [INFO] Warte 10 Sekunden, bevor der Server wieder gestartet wird...
+2025-05-09 21:41:34,816 [INFO] === MINECRAFT SERVER WIRD GESTARTET ===
+2025-05-09 21:41:34,817 [DEBUG] Ausführen: kubectl get statefulset minecraft-server -n default -o jsonpath='{.spec.replicas}'
+2025-05-09 21:41:34,862 [DEBUG] STDOUT:
+'0'
+2025-05-09 21:41:34,863 [INFO] Minecraft-Server wird einschalten...
+2025-05-09 21:41:34,864 [DEBUG] Ausführen: kubectl scale statefulset minecraft-server --replicas=1 -n default
+2025-05-09 21:41:34,913 [DEBUG] STDOUT:
+statefulset.apps/minecraft-server scaled
+2025-05-09 21:41:34,914 [INFO] SUCCESS: StatefulSet wurde auf 1 Replica(s) skaliert
+2025-05-09 21:41:39,915 [DEBUG] Ausführen: kubectl get pods -l app=minecraft-server -n default -o jsonpath='{.items[0].metadata.name}'
+2025-05-09 21:41:39,961 [DEBUG] STDOUT:
+'minecraft-server-0'
+2025-05-09 21:41:39,962 [INFO] Warte auf Bereitschaft von Pod minecraft-server-0...
+2025-05-09 21:41:39,963 [DEBUG] Ausführen: kubectl wait --for=condition=ready pod/minecraft-server-0 --timeout=300s -n default
+2025-05-09 21:41:40,110 [DEBUG] STDOUT:
+pod/minecraft-server-0 condition met
+2025-05-09 21:41:40,111 [INFO] SUCCESS: Pod minecraft-server-0 ist bereit
+2025-05-09 21:41:40,111 [INFO] Warte weitere 20 Sekunden, um sicherzustellen, dass der Server vollständig gestartet ist...
+2025-05-09 21:42:00,112 [DEBUG] Verbindung zum RCON-Server 192.168.0.165:30575 wird hergestellt...
+2025-05-09 21:42:00,125 [INFO] SUCCESS: RCON-Verbindung hergestellt zu 192.168.0.165:30575
+2025-05-09 21:42:00,126 [DEBUG] RCON-Befehl wird gesendet: list
+2025-05-09 21:42:00,140 [DEBUG] RCON-Antwort: There are 1 of a max of 20 players online: StraussRiese456
+2025-05-09 21:42:00,141 [DEBUG] RCON-Verbindung getrennt
+2025-05-09 21:42:00,142 [INFO] SUCCESS: Server gestartet und bereit. Aktuell 1 Spieler online.
+2025-05-09 21:42:00,142 [INFO] Online-Spieler: StraussRiese456
+2025-05-09 21:42:00,143 [INFO] SUCCESS: Minecraft-Server wurde erfolgreich neu gestartet
+2025-05-09 21:42:00,144 [INFO] SUCCESS: Operation 'restart' erfolgreich abgeschlossen.
+2025-05-09 21:42:00,144 [INFO] Detailliertes Protokoll wurde gespeichert unter: logs/minecraft_manager_20250509_214052.log

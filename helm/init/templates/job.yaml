@@ -23,8 +23,8 @@ spec:
       volumes:
       - name: eula-pvc
         persistentVolumeClaim:
-          claimName: {{ .Release.Name }}-minecraft-eula
+          claimName: minecraft-eula
       - name: minecraft-binary
         persistentVolumeClaim:
-          claimName: {{ .Release.Name }}-minecraft-binary-{{ .Values.minecraft.version | replace "." "-" }}
+          claimName: minecraft-binary-{{ .Values.minecraft.version | replace "." "-" }}
   backoffLimit: 4
