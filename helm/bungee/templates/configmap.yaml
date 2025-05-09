@@ -4,7 +4,7 @@ metadata:
   name: {{ .Release.Name }}-config
 data:
   config.yml: |
-    # Verbesserte BungeeCord-Konfiguration für Zero-Downtime-Updates
+    # Vereinfachte BungeeCord-Konfiguration für optimalen Proxy-Betrieb
     rcon:
         enabled: {{ .Values.rcon.enabled }}
         password: "{{ .Values.rcon.password | default "MeinSicheresRCONPasswort" }}"
@@ -12,11 +12,11 @@ data:
     server_connect_timeout: 10000
     listeners:
     - query_port: 25565
-      motd: '&1Minecraft Server mit Zero-Downtime Updates'
+      motd: '&1Minecraft Server mit Kubernetes'
       tab_list: GLOBAL_PING
       query_enabled: false
       proxy_protocol: false
-      ping_passthrough: false
+      ping_passthrough: true
       priorities:
       {{- range .Values.servers }}
       {{- if .isDefault }}
@@ -27,7 +27,7 @@ data:
       host: 0.0.0.0:25565
       max_players: 50
       tab_size: 60
-      force_default_server: false
+      force_default_server: true
     remote_ping_cache: -1
     network_compression_threshold: 256
     permissions:
@@ -52,11 +52,11 @@ data:
     online_mode: false
     forge_support: true
     
-    # Server-Definitionen
+    # Server-Definitionen - Vereinfacht für einen einzelnen Minecraft-Server
     servers:
       {{- range .Values.servers }}
       {{ .name }}:
-        motd: 'Minecraft Server {{ .name }}'
+        motd: 'Minecraft Server'
         address: {{ .address }}:{{ .port }}
         restricted: false
       {{- end }}
@@ -68,47 +68,3 @@ data:
     - {{ .name }}
     {{- end }}
     {{- end }}
-
-  bungee-script.sh: |
-    #!/bin/bash
-    # Hilfsskript für BungeeCord-Operationen
-    
-    LOG_FILE="/data/logs/bungee-ops.log"
-    
-    # Logging-Funktion
-    log() {
-      echo "[$(date +"%Y-%m-%d %H:%M:%S")] $1" | tee -a $LOG_FILE
-    }
-    
-    # Funktion zum Umschalten des Primär-Servers
-    switch_primary() {
-      if [ "$1" == "0" ]; then
-        # Setze Server 0 als primär
-        sed -i 's/minecraft-server-1/minecraft-server-0/g' /config/config.yml
-        log "Server 0 als primärer Server eingestellt"
-      elif [ "$1" == "1" ]; then
-        # Setze Server 1 als primär
-        sed -i 's/minecraft-server-0/minecraft-server-1/g' /config/config.yml
-        log "Server 1 als primärer Server eingestellt"
-      else
-        log "Ungültiger Server-Index: $1"
-        return 1
-      fi
-      
-      # BungeeCord neu laden
-      echo "reload" > /data/proxy_command
-      log "BungeeCord-Konfiguration neu geladen"
-      return 0
-    }
-    
-    # Hauptfunktion
-    case "$1" in
-      switch)
-        switch_primary "$2"
-        exit $?
-        ;;
-      *)
-        echo "Verwendung: $0 switch {0|1}"
-        exit 1
-        ;;
-    esac

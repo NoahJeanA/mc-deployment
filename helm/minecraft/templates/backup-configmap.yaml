@@ -1,0 +1,149 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-backup-scripts
+data:
+  backup.sh: |
+    #!/bin/sh
+    # Script zum Erstellen von Minecraft-Welt-Backups
+    
+    TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+    WORLD_NAME=$(grep "level-name=" /config/server.properties | cut -d'=' -f2)
+    BACKUP_DIR="/backup-world/backups"
+    BACKUP_FILE="${BACKUP_DIR}/${WORLD_NAME}_${TIMESTAMP}.tar.gz"
+    LOG_FILE="/tmp/backup.log"
+    RETENTION_DAYS={{ .Values.backup.retention | default 7 }}
+    
+    # Logging-Funktion
+    log() {
+      echo "[$(date +"%Y-%m-%d %H:%M:%S")] $1" | tee -a $LOG_FILE
+    }
+    
+    # Verzeichnisstruktur erstellen
+    mkdir -p "${BACKUP_DIR}"
+    
+    # Welt vor dem Backup speichern
+    if [ -f "/data/rcon.txt" ]; then
+      RCON_PASSWORD=$(cat /data/rcon.txt)
+      RCON_PORT={{ .Values.rcon.port | default 25575 }}
+      
+      # Spieler informieren
+      log "Informiere Spieler über Backup..."
+      echo "say §6§lErstelle Backup der Weltdaten..." > /tmp/rcon_command
+      
+      # Weltdaten speichern
+      log "Speichere Weltdaten..."
+      echo "save-all flush" > /tmp/rcon_command
+      
+      # Kurz warten
+      sleep 3
+    else
+      log "RCON-Passwort nicht gefunden, überspringe Spielerbenachrichtigung und Welt-Speicherung"
+    fi
+    
+    # Backup erstellen
+    log "Erstelle Backup der Welt '${WORLD_NAME}' nach ${BACKUP_FILE}..."
+    tar -czf "${BACKUP_FILE}" -C /minecraft-world "${WORLD_NAME}" && {
+      log "Backup erfolgreich erstellt: ${BACKUP_FILE}"
+      
+      # Alte Backups löschen
+      log "Lösche Backups, die älter als ${RETENTION_DAYS} Tage sind..."
+      find "${BACKUP_DIR}" -name "${WORLD_NAME}_*.tar.gz" -type f -mtime +${RETENTION_DAYS} -delete
+      
+      # Anzahl der verbleibenden Backups zählen
+      BACKUP_COUNT=$(find "${BACKUP_DIR}" -name "${WORLD_NAME}_*.tar.gz" -type f | wc -l)
+      log "Anzahl der verbleibenden Backups: ${BACKUP_COUNT}"
+      
+      # Spieler informieren
+      if [ -f "/data/rcon.txt" ]; then
+        echo "say §a§lBackup erfolgreich abgeschlossen." > /tmp/rcon_command
+      fi
+      
+      exit 0
+    } || {
+      log "Fehler beim Erstellen des Backups!"
+      
+      # Spieler informieren
+      if [ -f "/data/rcon.txt" ]; then
+        echo "say §c§lBackup fehlgeschlagen!" > /tmp/rcon_command
+      fi
+      
+      exit 1
+    }
+  
+  restore.sh: |
+    #!/bin/sh
+    # Script zum Wiederherstellen von Minecraft-Welt-Backups
+    
+    BACKUP_DIR="/backup-world/backups"
+    LOG_FILE="/tmp/restore.log"
+    WORLD_NAME=$(grep "level-name=" /config/server.properties | cut -d'=' -f2)
+    
+    # Überprüfe, ob ein Backup-Dateiname übergeben wurde
+    if [ -z "$1" ]; then
+      echo "Verwendung: $0 <backup-dateiname>"
+      echo "Verfügbare Backups:"
+      ls -la "${BACKUP_DIR}"
+      exit 1
+    fi
+    
+    BACKUP_FILE="${BACKUP_DIR}/$1"
+    
+    # Logging-Funktion
+    log() {
+      echo "[$(date +"%Y-%m-%d %H:%M:%S")] $1" | tee -a $LOG_FILE
+    }
+    
+    # Überprüfe, ob die Backup-Datei existiert
+    if [ ! -f "${BACKUP_FILE}" ]; then
+      log "Backup-Datei nicht gefunden: ${BACKUP_FILE}"
+      exit 1
+    fi
+    
+    # Überprüfe, ob der Minecraft-Server läuft
+    if pgrep -f "java.*server.jar" > /dev/null; then
+      log "FEHLER: Der Minecraft-Server muss vor der Wiederherstellung gestoppt werden!"
+      log "Starte den Server mit 'scale --replicas=0', stelle das Backup wieder her und starte dann mit 'scale --replicas=1'"
+      exit 1
+    fi
+    
+    # Erstelle ein Sicherheitsbackup der aktuellen Welt
+    TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+    SAFETY_BACKUP="${BACKUP_DIR}/${WORLD_NAME}_pre_restore_${TIMESTAMP}.tar.gz"
+    
+    log "Erstelle Sicherungsbackup der aktuellen Welt: ${SAFETY_BACKUP}"
+    tar -czf "${SAFETY_BACKUP}" -C /minecraft-world "${WORLD_NAME}" || {
+      log "WARNUNG: Konnte kein Sicherungsbackup erstellen"
+    }
+    
+    # Lösche die aktuelle Welt
+    log "Lösche aktuelle Weltdaten..."
+    rm -rf "/minecraft-world/${WORLD_NAME}"
+    mkdir -p "/minecraft-world/${WORLD_NAME}"
+    
+    # Stelle das Backup wieder her
+    log "Stelle Backup wieder her: ${BACKUP_FILE}"
+    tar -xzf "${BACKUP_FILE}" -C /minecraft-world && {
+      log "Backup erfolgreich wiederhergestellt"
+      
+      # Entferne Lock-Dateien
+      find "/minecraft-world/${WORLD_NAME}" -name "*.lock" -delete
+      find "/minecraft-world/${WORLD_NAME}" -name "*.tmp" -delete
+      rm -f "/minecraft-world/${WORLD_NAME}/session.lock"
+      
+      log "Lock-Dateien entfernt"
+      log "Wiederherstellung abgeschlossen. Server kann jetzt gestartet werden."
+      exit 0
+    } || {
+      log "FEHLER: Konnte Backup nicht wiederherstellen!"
+      
+      # Versuche, das Sicherheitsbackup wiederherzustellen
+      log "Versuche, das Sicherheitsbackup wiederherzustellen..."
+      tar -xzf "${SAFETY_BACKUP}" -C /minecraft-world && {
+        log "Sicherheitsbackup erfolgreich wiederhergestellt"
+      } || {
+        log "FEHLER: Konnte Sicherheitsbackup nicht wiederherstellen! Weltdaten sind möglicherweise verloren."
+      }
+      
+      exit 1
+    }

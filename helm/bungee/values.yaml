@@ -6,14 +6,10 @@ proxy:
   
 # Minecraft-Server-Konfiguration
 servers:
-  - name: "server1"
-    address: "minecraft-server-headless" # Einfacher Service-Name
+  - name: "minecraft"
+    address: "minecraft-server-headless" # Service-Name des Minecraft-Servers
     port: 25565
     isDefault: true
-  - name: "server2"
-    address: "minecraft-server-headless" # Einfacher Service-Name
-    port: 25565
-    isDefault: false
 
 # Ressourcen-Beschränkungen
 resources:
@@ -27,7 +23,7 @@ resources:
 # Service-Konfiguration
 service:
   type: NodePort
-  nodePort: 30566 # Gleicher Port wie Ihr aktueller Minecraft-Server
+  nodePort: 30566 # Port für Spieler-Verbindungen
 
 rcon:
   enabled: true

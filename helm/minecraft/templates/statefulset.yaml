@@ -118,6 +118,15 @@ spec:
         - name: world-validation-volume
           mountPath: /scripts/validate-world.sh
           subPath: validate-world.sh
+        - name: minecraft-backups-volume
+          mountPath: /backup-world/backups
+        - name: backup-scripts-volume
+          mountPath: /scripts/backup.sh
+          subPath: backup.sh
+        - name: backup-scripts-volume
+          mountPath: /scripts/restore.sh
+          subPath: restore.sh
+
         env:
         - name: POD_NAME
           valueFrom:
@@ -218,6 +227,13 @@ spec:
       - name: world-validation-volume
         configMap:
           name: {{ .Release.Name }}-validation
+          defaultMode: 0755
+      - name: minecraft-backups-volume
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}-backups
+      - name: backup-scripts-volume
+        configMap:
+          name: {{ .Release.Name }}-backup-scripts
           defaultMode: 0755
   volumeClaimTemplates:
   - metadata:

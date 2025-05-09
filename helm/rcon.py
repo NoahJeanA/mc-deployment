@@ -1,11 +1,19 @@
 #!/usr/bin/env python3
-# minecraft_rcon_console.py
-# Eine interaktive Konsole für die Verwaltung von Minecraft-Servern über RCON
+"""
+Minecraft RCON-Konsole
+
+Ein interaktives Kommandozeilen-Tool für die direkte Verwaltung
+eines Minecraft-Servers über das RCON-Protokoll.
+
+Verwendung:
+python rcon.py --host <SERVER_IP> --port <RCON_PORT> --password <RCON_PASSWORD>
+"""
 
 import argparse
 import sys
 import os
 import readline  # Für verbesserte Befehlszeileneingabe
+import time
 
 try:
     from mcrcon import MCRcon
@@ -26,6 +34,7 @@ class MinecraftRCONConsole:
         self.mcr = None
         self.connected = False
         self.command_history = []
+        self.last_command_time = 0
 
     def connect(self):
         """Verbindung zum Minecraft-Server herstellen."""
@@ -55,9 +64,16 @@ class MinecraftRCONConsole:
             print("Nicht mit dem Server verbunden!")
             return None
 
+        # Ratenbegrenzung für Befehle (um Serverüberlastung zu vermeiden)
+        current_time = time.time()
+        elapsed = current_time - self.last_command_time
+        if elapsed < 0.5:  # Maximal 2 Befehle pro Sekunde
+            time.sleep(0.5 - elapsed)
+
         try:
             response = self.mcr.command(command)
             self.command_history.append(command)
+            self.last_command_time = time.time()
             return response
         except Exception as e:
             print(f"Fehler beim Senden des Befehls: {e}")
@@ -70,13 +86,20 @@ class MinecraftRCONConsole:
             return
 
         clear_screen()
-        print("\n" + "=" * 50)
-        print("Minecraft RCON Konsole")
-        print("=" * 50)
+        print("\n" + "=" * 60)
+        print(" " * 20 + "MINECRAFT RCON KONSOLE")
+        print("=" * 60)
         print(f"Verbunden mit: {self.host}:{self.port}")
         print("Geben Sie Befehle ein oder 'exit' zum Beenden.")
-        print("Nützliche Befehle: 'help', 'list', 'say <nachricht>', 'op <spieler>'")
-        print("=" * 50 + "\n")
+        print("Nützliche Befehle:")
+        print("- help             : Zeigt verfügbare Befehle")
+        print("- list             : Zeigt verbundene Spieler")
+        print("- say <nachricht>  : Sendet Nachricht an alle Spieler")
+        print("- op <spieler>     : Erteilt Operator-Status")
+        print("- save-all         : Speichert die Weltdaten")
+        print("- stop             : Fährt den Server herunter")
+        print("- clear            : Löscht die Konsole")
+        print("=" * 60 + "\n")
 
         # Erste Serverinformationen abrufen
         try:
@@ -91,6 +114,23 @@ class MinecraftRCONConsole:
             print()
         except Exception as e:
             print(f"Fehler beim Abrufen der Serverinformationen: {e}")
+
+        # Tab-Vervollständigung für häufige Befehle
+        common_commands = [
+            "help", "list", "say", "op", "deop", "kick", "ban", "pardon",
+            "save-all", "save-off", "save-on", "stop", "clear", "weather", 
+            "time set", "gamemode", "gamerule", "difficulty", "whitelist", "tp"
+        ]
+        
+        def completer(text, state):
+            options = [cmd for cmd in common_commands if cmd.startswith(text)]
+            if state < len(options):
+                return options[state]
+            else:
+                return None
+                
+        readline.set_completer(completer)
+        readline.parse_and_bind("tab: complete")
 
         # Hauptschleife
         while self.connected:

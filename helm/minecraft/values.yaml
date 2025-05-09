@@ -15,6 +15,7 @@ resources:
 storage:
   world: 5Gi
   cash: 3Gi
+  backup: 10Gi  # Größerer Speicher für Backups
 
 # Init Chart Ressourcen
 initResources:
@@ -51,3 +52,9 @@ rcon:
 service:
   nodePort: 30565
   rconNodePort: 30575
+
+# Backup-Konfiguration
+backup:
+  enabled: true
+  schedule: "0 3 * * *"  # Täglich um 3 Uhr morgens
+  retention: 7          # Behalte die letzten 7 Backups
