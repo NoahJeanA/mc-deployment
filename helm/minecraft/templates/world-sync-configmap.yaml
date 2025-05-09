@@ -5,24 +5,32 @@ metadata:
 data:
   world-sync.sh: |
     #!/bin/bash
-    # Skript zum Synchronisieren der Weltdaten zwischen Servern
-    
     WORLD_NAME=$(grep "level-name=" /config/server.properties | cut -d'=' -f2)
     echo "Synchronisiere Weltdaten für $WORLD_NAME von Quelle zu Ziel..."
-    
+
     if [ "$1" == "to-backup" ]; then
-      # Kopieren von dieser Welt zum Backup
+      # Sicherstellen, dass der Server alle Chunks geschrieben hat
+      # (Idealerweise über RCON einen save-all Befehl senden)
+      
       echo "Kopiere von dieser Welt zu Backup-Welt..."
       mkdir -p /backup-world/$WORLD_NAME
-      cp -rf /minecraft-world/$WORLD_NAME/* /backup-world/$WORLD_NAME/
+      
+      # Alle Dateien kopieren AUSSER session.lock
+      find /minecraft-world/$WORLD_NAME -type f -not -name "session.lock" -exec cp -f {} /backup-world/$WORLD_NAME/ \;
+      
     elif [ "$1" == "from-backup" ]; then
-      # Kopieren vom Backup zu dieser Welt
       echo "Kopiere von Backup-Welt zu dieser Welt..."
+      
+      # Wichtig: Server muss gestoppt sein, bevor man hierher kommt
       mkdir -p /minecraft-world/$WORLD_NAME
+      
+      # Alle Dateien kopieren, session.lock wird auf dem Zielserver neu erstellt
       cp -rf /backup-world/$WORLD_NAME/* /minecraft-world/$WORLD_NAME/
+      # Sicherstellen, dass keine alte session.lock existiert
+      rm -f /minecraft-world/$WORLD_NAME/session.lock
     else
       echo "Ungültiger Parameter: $1"
       exit 1
     fi
-    
+
     echo "Synchronisation abgeschlossen!"
